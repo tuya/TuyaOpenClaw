@@ -24,6 +24,11 @@ if(!ENABLE_AI_CHAT_CUSTOM_UI)
         config ENABLE_AI_CHAT_GUI_OLED
             select ENABLE_LIBLVGL
             bool "Use OLED ui"
+
+        config ENABLE_AI_CHAT_GUI_XIAOZHI
+            select ENABLE_LIBLVGL
+            select FONT_EMOJI_SIZE_64
+            bool "Use Xiaozhi-style standby face ui"
     endchoice
 
     config ENABLE_CIRCLE_UI_STYLE

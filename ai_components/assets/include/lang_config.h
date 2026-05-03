@@ -42,6 +42,17 @@ extern "C" {
 #define SYSTEM_MSG_VOLUME "音量设置为"
 #define VIEW_IMAGE "查看图片"
 
+/* Standby face hints */
+#define LANG_STANDBY_HINT_HAPPY "轻触唤醒"
+#define LANG_STANDBY_HINT_RELAXED "随时等你"
+#define LANG_STANDBY_HINT_CURIOUS "有什么想说的？"
+#define LANG_STANDBY_HINT_SLEEPY "晚安..."
+#define LANG_STANDBY_HINT_EXCITED "来啦！"
+
+/* Standby face states */
+#define LANG_RESPONDING "回应中..."
+#define LANG_SLEEPING "休眠中..."
+
 #ifdef __cplusplus
 }
 #endif

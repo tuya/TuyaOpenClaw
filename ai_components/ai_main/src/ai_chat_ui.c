@@ -16,6 +16,8 @@
 #include "ai_ui_chat_chatbot.h"
 #elif defined(ENABLE_AI_CHAT_GUI_OLED) && (ENABLE_AI_CHAT_GUI_OLED == 1)
 #include "ai_ui_chat_oled.h"
+#elif defined(ENABLE_AI_CHAT_GUI_XIAOZHI) && (ENABLE_AI_CHAT_GUI_XIAOZHI == 1)
+#include "ai_ui_chat_xiaozhi.h"
 #endif
 
 #include "ai_chat_main.h"
@@ -40,8 +42,13 @@ static void __ai_chat_disp_mode_state(AI_MODE_STATE_E state)
     switch (state) {
     case AI_MODE_STATE_INIT:
     case AI_MODE_STATE_IDLE:
+#if defined(ENABLE_AI_CHAT_GUI_XIAOZHI) && (ENABLE_AI_CHAT_GUI_XIAOZHI == 1)
+        /* Xiaozhi UI handles standby mode internally */
+        ai_ui_disp_msg(AI_UI_DISP_STATUS, (uint8_t *)STANDBY, strlen(STANDBY));
+#else
         ai_ui_disp_msg(AI_UI_DISP_EMOTION, (uint8_t *)EMOJI_NEUTRAL, strlen(EMOJI_NEUTRAL));
         ai_ui_disp_msg(AI_UI_DISP_STATUS, (uint8_t *)STANDBY, strlen(STANDBY));
+#endif
         break;
     case AI_MODE_STATE_LISTEN:
         ai_ui_disp_msg(AI_UI_DISP_STATUS, (uint8_t *)LISTENING, strlen(LISTENING));
@@ -148,6 +155,8 @@ OPERATE_RET ai_chat_ui_init(void)
     TUYA_CALL_ERR_RETURN(ai_ui_chat_chatbot_register());
 #elif defined(ENABLE_AI_CHAT_GUI_OLED) && (ENABLE_AI_CHAT_GUI_OLED == 1)
     TUYA_CALL_ERR_RETURN(ai_ui_chat_oled_register());
+#elif defined(ENABLE_AI_CHAT_GUI_XIAOZHI) && (ENABLE_AI_CHAT_GUI_XIAOZHI == 1)
+    TUYA_CALL_ERR_RETURN(ai_ui_chat_xiaozhi_register());
 #else
 #error "please select ai chat present ui"
 #endif

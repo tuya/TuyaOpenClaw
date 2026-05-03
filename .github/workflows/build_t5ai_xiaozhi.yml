@@ -1,0 +1,119 @@
+name: Build T5AI Firmware with Xiaozhi UI
+
+on:
+  push:
+    branches: [ master, main ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Free disk space
+      run: |
+        sudo rm -rf /usr/share/dotnet
+        sudo rm -rf /opt/ghc
+        sudo rm -rf "/usr/local/share/boost"
+        sudo rm -rf "$AGENT_TOOLSDIRECTORY"
+        sudo apt-get clean
+        df -h
+
+    - uses: actions/checkout@v4
+      with:
+        submodules: recursive
+        fetch-depth: 0
+
+    - name: Cache TuyaOpen
+      uses: actions/cache@v4
+      with:
+        path: TuyaOpen
+        key: tuyaopen-${{ hashFiles('.gitmodules') }}
+        restore-keys: |
+          tuyaopen-
+
+    - name: Init TuyaOpen submodules
+      run: |
+        git submodule update --init --recursive
+
+    - name: Setup Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.10'
+
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y git wget build-essential
+        pip install -r TuyaOpen/requirements.txt
+
+    - name: Setup T5AI Platform
+      run: |
+        cd TuyaOpen
+        # Set up git safe directories
+        git config --global --add safe.directory "$(pwd)/platform/T5AI"
+        # Install ARM toolchain
+        if [ ! -d "platform/tools/gcc-arm-none-eabi-10.3-2021.10" ]; then
+          echo "Downloading ARM toolchain..."
+          wget -q https://armkeil.blob.core.windows.net/developer/Files/downloads/gnu-rm/10.3-2021.10/gcc-arm-none-eabi-10.3-2021.10-x86_64-linux.tar.bz2
+          tar -xjf gcc-arm-none-eabi-10.3-2021.10-x86_64-linux.tar.bz2 -C platform/tools/
+          rm gcc-arm-none-eabi-10.3-2021.10-x86_64-linux.tar.bz2
+        fi
+        echo "ARM toolchain ready"
+
+    - name: Copy config file
+      run: |
+        cp -f .build/cache/using.config TuyaOpen/
+
+    - name: Build Firmware
+      run: |
+        cd TuyaOpen/platform/T5AI/t5_os
+        export TUYA_PROJECT_DIR="$(cd ../../../.. && pwd)"
+        export TUYA_APP_NAME="DuckyClaw"
+        export TUYA_APP_PATH="$TUYA_PROJECT_DIR"
+        export TUYA_TOOLCHAIN_PATH="$TUYA_PROJECT_DIR/TuyaOpen/platform/tools/gcc-arm-none-eabi-10.3-2021.10"
+        export PATH="$TUYA_TOOLCHAIN_PATH/bin:$PATH"
+
+        # Create tuya_iot_config.h
+        mkdir -p include/base/include
+        cp "$TUYA_PROJECT_DIR/include/tuya_app_config.h" include/base/include/tuya_iot_config.h
+
+        echo "Starting build..."
+        bash build.sh DuckyClaw 1.0.0 bk7258 "$TUYA_PROJECT_DIR" build 2>&1 | tee build.log
+
+    - name: Package Firmware
+      run: |
+        cd TuyaOpen/platform/T5AI/t5_os
+        if [ -f "build/bk7258/tuya_app/package/ua_file.bin" ]; then
+          cp build/bk7258/tuya_app/package/ua_file.bin "$GITHUB_WORKSPACE/DuckyClaw_Xiaozhi_UA.bin"
+          cp build/bk7258/tuya_app/package/all-app.bin "$GITHUB_WORKSPACE/DuckyClaw_Xiaozhi_QIO.bin"
+          echo "Firmware packaged successfully"
+          ls -lh "$GITHUB_WORKSPACE/"*.bin
+        else
+          echo "Build artifacts not found"
+          exit 1
+        fi
+
+    - name: Upload Firmware
+      uses: actions/upload-artifact@v4
+      with:
+        name: DuckyClaw_Xiaozhi_Firmware
+        path: |
+          DuckyClaw_Xiaozhi_UA.bin
+          DuckyClaw_Xiaozhi_QIO.bin
+          TuyaOpen/platform/T5AI/t5_os/build/bk7258/tuya_app/*/app.bin
+          TuyaOpen/platform/T5AI/t5_os/build.log
+        retention-days: 30
+        if-no-files-found: error
+
+    - name: Upload Release
+      if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/')
+      uses: softprops/action-gh-release@v1
+      with:
+        files: |
+          DuckyClaw_Xiaozhi_UA.bin
+          DuckyClaw_Xiaozhi_QIO.bin
+        draft: false
+        prerelease: false
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
