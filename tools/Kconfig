@@ -13,4 +13,13 @@ menu "Tools (Filesystem) Config"
         help
             When enabled (y), enable hardware MCP tools.
             When disabled (n), disable hardware MCP tools.
+
+    config ENABLE_LUA_TOOL
+        bool "Enable lua_run_script MCP tool"
+        depends on ENABLE_LUA
+        default n
+        help
+            Register the lua_run_script MCP tool that lets the cloud-side
+            LLM execute an inline Lua 5.5 snippet under the embedded
+            sandboxed runtime. Requires ENABLE_LUA to be set.
 endmenu

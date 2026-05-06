@@ -27,6 +27,18 @@
 #if defined(ENABLE_HARDWARE_MCP) && (ENABLE_HARDWARE_MCP == 1)
 #include "tool_hw.h"
 #endif
+
+#if defined(ENABLE_LUA_TOOL) && (ENABLE_LUA_TOOL == 1)
+#include "tool_lua.h"
+#endif
+
+#if defined(ENABLE_LUA_MODULE_GPIO) && (ENABLE_LUA_MODULE_GPIO == 1)
+#include "lua_module_gpio.h"
+#endif
+
+#if defined(ENABLE_LUA_MODULE_DELAY) && (ENABLE_LUA_MODULE_DELAY == 1)
+#include "lua_module_delay.h"
+#endif
 /***********************************************************
 ***********************function define**********************
 ***********************************************************/
@@ -77,6 +89,20 @@ static OPERATE_RET __ai_mcp_init(void *data)
     /* Register hardware peripheral tools */
     #if defined(ENABLE_HARDWARE_MCP) && (ENABLE_HARDWARE_MCP == 1)
     TUYA_CALL_ERR_LOG(tool_hw_register());
+    #endif
+
+    /* Register embedded Lua scripting tool */
+    #if defined(ENABLE_LUA_TOOL) && (ENABLE_LUA_TOOL == 1)
+    TUYA_CALL_ERR_LOG(tool_lua_register());
+    #endif
+
+    /* Register Lua hardware modules */
+    #if defined(ENABLE_LUA_MODULE_GPIO) && (ENABLE_LUA_MODULE_GPIO == 1)
+    lua_module_gpio_register();
+    #endif
+
+    #if defined(ENABLE_LUA_MODULE_DELAY) && (ENABLE_LUA_MODULE_DELAY == 1)
+    lua_module_delay_register();
     #endif
 
     PR_DEBUG("MCP Server initialized successfully with tools");

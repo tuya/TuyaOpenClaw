@@ -1,0 +1,45 @@
+menuconfig ENABLE_LUA
+    bool "Enable embedded Lua 5.5 interpreter"
+    default n
+    help
+        Enable the embedded Lua 5.5 interpreter that powers the
+        lua_run_script MCP tool. When disabled, neither the interpreter
+        nor the tool_lua wrapper are compiled in.
+
+if ENABLE_LUA
+
+config LUA_OUTPUT_BUFFER_SIZE
+    int "Lua print/output capture buffer (bytes)"
+    default 4096
+    range 1024 32768
+    help
+        Maximum total bytes captured from Lua print() and runtime errors
+        before truncation. The captured text is returned to the LLM as
+        the tool result.
+
+config LUA_DEFAULT_TIMEOUT_MS
+    int "Default Lua execution timeout (ms)"
+    default 3000
+    range 100 60000
+    help
+        Wall-clock budget applied when the LLM does not specify
+        timeout_ms. The runtime checks every ~100 bytecode instructions.
+
+config ENABLE_LUA_MODULE_GPIO
+    bool "Enable lua_module_gpio (GPIO control from Lua)"
+    depends on ENABLE_LUA
+    default n
+    help
+        Expose gpio.set_direction(), gpio.set_level(), gpio.get_level()
+        to Lua scripts.  Requires a board with tkl_gpio support.
+
+config ENABLE_LUA_MODULE_DELAY
+    bool "Enable lua_module_delay (blocking delays from Lua)"
+    depends on ENABLE_LUA
+    default n
+    help
+        Expose delay.delay_ms() and delay.delay_us() to Lua scripts.
+        delay_ms uses tal_system_sleep (yields the task); delay_us uses
+        tkl_system_sleep_us and is capped at 1_000_000 us per call.
+
+endif # ENABLE_LUA

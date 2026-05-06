@@ -50,3 +50,4 @@ target_include_directories(${EXAMPLE_LIB}
 
 add_subdirectory(${APP_PATH}/ai_components ${CMAKE_BINARY_DIR}/ai_components)
 add_subdirectory(${APP_PATH}/IM ${CMAKE_BINARY_DIR}/IM)
+add_subdirectory(${APP_PATH}/components/lua ${CMAKE_BINARY_DIR}/components/lua)
