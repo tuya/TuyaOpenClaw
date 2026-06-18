@@ -1,30 +1,22 @@
 ##
 # @file CMakeLists.txt
-# @brief 
+# @brief
 #/
 if (CONFIG_ENABLE_COMP_AI_PICTURE STREQUAL "y")
 
-set(COMP_MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
+set(MODULE_PATH ${CMAKE_CURRENT_LIST_DIR})
+get_filename_component(MODULE_NAME ${MODULE_PATH} NAME)
 
-set(COMP_MODULE_SRCS)
+file(GLOB_RECURSE LIB_SRCS ${MODULE_PATH}/src/*.c)
+set(LIB_PUBLIC_INC ${MODULE_PATH}/include)
 
-file(GLOB_RECURSE COMP_MODULE_SRCS ${COMP_MODULE_PATH}/src/*.c) 
+add_library(${MODULE_NAME})
+target_sources(${MODULE_NAME} PRIVATE ${LIB_SRCS})
+target_include_directories(${MODULE_NAME} PUBLIC ${LIB_PUBLIC_INC})
 
-set(COMP_MODULE_INC 
-    ${COMP_MODULE_PATH}/include
-)
-
-########################################
-# Target Configure
-########################################
-target_sources(${EXAMPLE_LIB}
-    PRIVATE
-        ${COMP_MODULE_SRCS}
-    )
-
-target_include_directories(${EXAMPLE_LIB}
-    PRIVATE
-        ${COMP_MODULE_INC}
-    )
+list(APPEND COMPONENT_LIBS ${MODULE_NAME})
+set(COMPONENT_LIBS "${COMPONENT_LIBS}" PARENT_SCOPE)
+list(APPEND COMPONENT_PUBINC ${LIB_PUBLIC_INC})
+set(COMPONENT_PUBINC "${COMPONENT_PUBINC}" PARENT_SCOPE)
 
 endif()

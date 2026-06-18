@@ -10,12 +10,13 @@
 #include "ai_ui_manage.h"
 #include "lang_config.h"
 
-#if defined(ENABLE_AI_CHAT_GUI_WECHAT) && (ENABLE_AI_CHAT_GUI_WECHAT == 1)
-#include "ai_ui_chat_wechat.h"
-#elif defined(ENABLE_AI_CHAT_GUI_CHATBOT) && (ENABLE_AI_CHAT_GUI_CHATBOT == 1)
+#if defined(ENABLE_AI_CHAT_GUI_CHATBOT) && (ENABLE_AI_CHAT_GUI_CHATBOT == 1)
 #include "ai_ui_chat_chatbot.h"
 #elif defined(ENABLE_AI_CHAT_GUI_OLED) && (ENABLE_AI_CHAT_GUI_OLED == 1)
 #include "ai_ui_chat_oled.h"
+#else
+/* DuckyClaw default UI: WeChat-style (chosen as fallback). */
+#include "ai_ui_chat_wechat.h"
 #endif
 
 #include "ai_chat_main.h"
@@ -62,6 +63,9 @@ static void __ai_chat_disp_mode_state(AI_MODE_STATE_E state)
         break;
     case AI_MODE_STATE_SPEAK:
         ai_ui_disp_msg(AI_UI_DISP_STATUS, (uint8_t *)SPEAKING, strlen(SPEAKING));
+        break;
+    case AI_MODE_STATE_UPLOAD:
+        ai_ui_disp_msg(AI_UI_DISP_STATUS, (uint8_t *)UPLOADING, strlen(UPLOADING));
         break;
     default:
         break;
@@ -143,18 +147,18 @@ void ai_chat_ui_handle_event(AI_NOTIFY_EVENT_T *event)
 
         ai_ui_disp_msg(AI_UI_DISP_CHAT_MODE, (uint8_t *)name, strlen(name));
     } break;
-    case AI_USER_EVT_VIDEO_DISPLAY_START: {
-        AI_NOTIFY_VIDEO_START_T *video_start = (AI_NOTIFY_VIDEO_START_T *)(event->data);
-        if (NULL == video_start) {
-            PR_ERR("video start param is null");
-            break;
-        }
 
-        ai_ui_camera_start(video_start->camera_width, video_start->camera_height);
+#if defined(ENABLE_COMP_AI_PICTURE) && (ENABLE_COMP_AI_PICTURE == 1)
+    case AI_USER_EVT_GENERATE_PICTURE: 
+    case AI_USER_EVT_GET_PICTURE_FROM_APP: {
+        ai_ui_disp_msg(AI_UI_DISP_AI_IMAGE_LINK, (uint8_t *)(event->data), strlen((char *)(event->data)));
     } break;
-    case AI_USER_EVT_VIDEO_DISPLAY_END:
-        ai_ui_camera_end();
-        break;
+
+    case AI_USER_EVT_SEND_PICTURE_END: {
+        ai_ui_disp_msg(AI_UI_DISP_CLEAR_CHAT_ATTACH, NULL, 0);
+    } break;
+#endif
+
     default:
         break;
     }
@@ -167,14 +171,17 @@ OPERATE_RET ai_chat_ui_init(void)
 #if defined(ENABLE_AI_CHAT_CUSTOM_UI) && (ENABLE_AI_CHAT_CUSTOM_UI == 1)
     PR_NOTICE("use custom ai chat ui, need register ui by user");
 #else
-#if defined(ENABLE_AI_CHAT_GUI_WECHAT) && (ENABLE_AI_CHAT_GUI_WECHAT == 1)
-    TUYA_CALL_ERR_RETURN(ai_ui_chat_wechat_register());
-#elif defined(ENABLE_AI_CHAT_GUI_CHATBOT) && (ENABLE_AI_CHAT_GUI_CHATBOT == 1)
+
+#if defined(ENABLE_AI_CHAT_GUI_CHATBOT) && (ENABLE_AI_CHAT_GUI_CHATBOT == 1)
     TUYA_CALL_ERR_RETURN(ai_ui_chat_chatbot_register());
 #elif defined(ENABLE_AI_CHAT_GUI_OLED) && (ENABLE_AI_CHAT_GUI_OLED == 1)
     TUYA_CALL_ERR_RETURN(ai_ui_chat_oled_register());
 #else
-#error "please select ai chat present ui"
+    /* DuckyClaw default: WeChat-style UI.  The upstream Kconfig choice does
+     * not always resolve a default through DuckyClaw's app-local Kconfig
+     * include path; fall back to WeChat so the build is never blocked on
+     * an unresolved choice. */
+    TUYA_CALL_ERR_RETURN(ai_ui_chat_wechat_register());
 #endif
 #endif
 

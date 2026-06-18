@@ -452,22 +452,27 @@ static void __ui_set_chat_mode(char *chat_mode)
 OPERATE_RET ai_ui_chat_chatbot_register(void)
 {
     AI_UI_INTFS_T intfs;
-
     memset(&intfs, 0, sizeof(AI_UI_INTFS_T));
 
-    intfs.disp_init                = __ui_init;
-    intfs.disp_user_msg            = __ui_set_user_msg;
-    intfs.disp_ai_msg              = __ui_set_ai_msg;   
-    intfs.disp_ai_msg_stream_start = __ui_set_ai_msg_stream_start;
-    intfs.disp_ai_msg_stream_data  = __ui_set_ai_msg_stream_data;
-    intfs.disp_ai_msg_stream_end   = __ui_set_ai_msg_stream_end;
-    intfs.disp_system_msg          = __ui_set_system_msg;
-    intfs.disp_emotion             = __ui_set_emotion;
-    intfs.disp_ai_mode_state       = __ui_set_status;
-    intfs.disp_notification        = __ui_set_notification;
-    intfs.disp_wifi_state          = __ui_set_network;
-    intfs.disp_ai_chat_mode        = __ui_set_chat_mode;
+    intfs.disp_init         = __ui_init;
+    intfs.disp_emotion      = __ui_set_emotion;
+    intfs.disp_ai_mode_state = __ui_set_status;
+    intfs.disp_notification = __ui_set_notification;
+    intfs.disp_wifi_state   = __ui_set_network;
+    intfs.disp_ai_chat_mode = __ui_set_chat_mode;
 
-    return ai_ui_register(&intfs);
+    ai_ui_register(&intfs);
+
+    AI_UI_CHAT_INTFS_T chat_intfs;
+    memset(&chat_intfs, 0, sizeof(AI_UI_CHAT_INTFS_T));
+
+    chat_intfs.disp_user_msg            = __ui_set_user_msg;
+    chat_intfs.disp_ai_msg              = __ui_set_ai_msg;
+    chat_intfs.disp_ai_msg_stream_start = __ui_set_ai_msg_stream_start;
+    chat_intfs.disp_ai_msg_stream_data  = __ui_set_ai_msg_stream_data;
+    chat_intfs.disp_ai_msg_stream_end   = __ui_set_ai_msg_stream_end;
+    chat_intfs.disp_system_msg          = __ui_set_system_msg;
+
+    return ai_ui_chat_register(&chat_intfs);
 }
 #endif
