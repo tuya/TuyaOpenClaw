@@ -228,8 +228,8 @@ void user_event_handler_on(tuya_iot_client_t *client, tuya_event_msg_t *event)
             first = 0;
 
 #if defined(ENABLE_CHAT_DISPLAY) && (ENABLE_CHAT_DISPLAY == 1)
-            UI_WIFI_STATUS_E wifi_status = UI_WIFI_STATUS_GOOD;
-            ai_ui_disp_msg(AI_UI_DISP_NETWORK, (uint8_t *)&wifi_status, sizeof(UI_WIFI_STATUS_E));
+            AI_UI_WIFI_STATUS_E wifi_status = AI_UI_WIFI_STATUS_GOOD;
+            ai_ui_disp_msg(AI_UI_DISP_NETWORK, (uint8_t *)&wifi_status, sizeof(AI_UI_WIFI_STATUS_E));
 #endif
             ai_audio_volume_upload();
         }
@@ -476,8 +476,8 @@ static void tuya_app_thread(void *arg)
 void tuya_app_main(void)
 {
 #if defined(PLATFORM_T5) && (PLATFORM_T5 == 1)
-    extern VOID_T tkl_system_psram_malloc_force_set(BOOL_T enable);
-    tkl_system_psram_malloc_force_set(TRUE);
+    extern void tkl_system_psram_malloc_force_set(bool enable);
+    tkl_system_psram_malloc_force_set(true);
 #endif
 
     THREAD_CFG_T thrd_param = {0};

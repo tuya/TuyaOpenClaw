@@ -67,3 +67,4 @@ dkms.conf
 
 # debug information files
 *.dwo
+.sync_tmp/
