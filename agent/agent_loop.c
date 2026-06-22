@@ -479,7 +479,7 @@ static void agent_loop_task(void *arg)
             PR_INFO("LLM iteration=%d tool_called=%d tool_ok=%d is_last=%d",
                     iteration + 1, called, call_ok, is_last);
 
-            if (!called || is_last) {
+            if (!called || is_last || call_ok) {
                 if (s_last_response && s_last_response_lock) {
                     tal_mutex_lock(s_last_response_lock);
                     if (s_last_response[0] != '\0') {
