@@ -834,6 +834,9 @@ OPERATE_RET ws_server_start(void)
 #endif
     cfg.priority     = THREAD_PRIO_1;
     cfg.thrdname     = "claw_ws";
+#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
+    cfg.psram_mode = 1;
+#endif
 
     s_ws_running   = TRUE;
     OPERATE_RET rt = tal_thread_create_and_start(&s_ws_thread, NULL, NULL,

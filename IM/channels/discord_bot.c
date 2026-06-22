@@ -1210,6 +1210,9 @@ OPERATE_RET discord_bot_start(void)
     cfg.stackDepth   = IM_DC_POLL_STACK;
     cfg.priority     = THREAD_PRIO_1;
     cfg.thrdname     = "im_dc_gw";
+#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
+    cfg.psram_mode = 1;
+#endif
 
     OPERATE_RET rt = tal_thread_create_and_start(&s_gateway_thread, NULL, NULL, discord_gateway_task, NULL, &cfg);
     if (rt != OPRT_OK) {

@@ -2678,6 +2678,9 @@ OPERATE_RET feishu_bot_start(void)
     cfg.stackDepth   = IM_FS_POLL_STACK;
     cfg.priority     = THREAD_PRIO_1;
     cfg.thrdname     = "im_fs_ws";
+#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
+    cfg.psram_mode = 1;
+#endif
 
     PR_INFO("Device Free heap %d", tal_system_get_free_heap_size());
     rt = tal_thread_create_and_start(&s_ws_thread, NULL, NULL, feishu_ws_task, NULL, &cfg);

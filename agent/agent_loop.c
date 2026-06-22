@@ -221,9 +221,6 @@ static void __on_tool_executed(const char *tool_name, OPERATE_RET rt,
         s_turn.tool_result[TOOL_RESULT_BUF_SIZE - 1] = '\0';
         tal_mutex_unlock(s_turn.lock);
     }
-
-    /* Suppress TTS and UI output for the remainder of this iteration. */
-    // ai_chat_ui_set_output_suppressed(TRUE);
 }
 
 /**
@@ -439,9 +436,6 @@ static void agent_loop_task(void *arg)
                 s_turn.tool_result[0] = '\0';
                 tal_mutex_unlock(s_turn.lock);
             }
-
-            /* Restore TTS and UI output for this iteration. */
-            // ai_chat_ui_set_output_suppressed(FALSE);
 
             /* On the last allowed iteration, ask the AI to summarise instead of
              * calling more tools.  iteration is 0-based so the last slot is

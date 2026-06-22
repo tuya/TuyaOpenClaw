@@ -37,19 +37,6 @@
 ***********************function define**********************
 ***********************************************************/
 
-/* UI output suppression flag. */
-static volatile bool s_ui_output_suppressed = FALSE;
-
-/**
- * @brief Set UI output suppression state.
- * @param[in] suppressed TRUE to suppress, FALSE to restore.
- * @return none
- */
-void ai_chat_ui_set_output_suppressed(bool suppressed)
-{
-    s_ui_output_suppressed = suppressed;
-}
-
 static void __ai_chat_disp_mode_state(AI_MODE_STATE_E state)
 {
     switch (state) {
@@ -89,10 +76,6 @@ void ai_chat_ui_handle_event(AI_NOTIFY_EVENT_T *event)
         }
     } break;
     case AI_USER_EVT_TEXT_STREAM_START: {
-        /* Suppress display if a tool was called in this iteration. */
-        // if (s_ui_output_suppressed) {
-        //     break;
-        // }
         ai_ui_disp_msg(AI_UI_DISP_AI_MSG_STREAM_START, NULL, 0);
 
         text = (AI_NOTIFY_TEXT_T *)event->data;
@@ -101,19 +84,12 @@ void ai_chat_ui_handle_event(AI_NOTIFY_EVENT_T *event)
         }
     } break;
     case AI_USER_EVT_TEXT_STREAM_DATA: {
-        /* Suppress display if a tool was called in this iteration. */
-        // if (s_ui_output_suppressed) {
-        //     break;
-        // }
         text = (AI_NOTIFY_TEXT_T *)event->data;
         if (text && text->datalen > 0 && text->data) {
             ai_ui_disp_msg(AI_UI_DISP_AI_MSG_STREAM_DATA, (uint8_t *)text->data, text->datalen);
         }
     } break;
     case AI_USER_EVT_TEXT_STREAM_STOP: {
-        // if (s_ui_output_suppressed) {
-        //     break;
-        // }
         text = (AI_NOTIFY_TEXT_T *)event->data;
         if (text && text->datalen > 0 && text->data) {
             ai_ui_disp_msg(AI_UI_DISP_AI_MSG_STREAM_DATA, (uint8_t *)text->data, text->datalen);

@@ -511,6 +511,9 @@ OPERATE_RET telegram_bot_start(void)
     cfg.stackDepth   = IM_TG_POLL_STACK;
     cfg.priority     = THREAD_PRIO_1;
     cfg.thrdname     = "im_tg_poll";
+#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
+    cfg.psram_mode = 1;
+#endif
 
     OPERATE_RET rt = tal_thread_create_and_start(&s_poll_thread, NULL, NULL, telegram_poll_task, NULL, &cfg);
     if (rt != OPRT_OK) {

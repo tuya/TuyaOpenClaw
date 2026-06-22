@@ -857,6 +857,9 @@ static void weixin_qr_login_task(void *arg)
                 cfg.stackDepth   = IM_WX_POLL_STACK;
                 cfg.priority     = THREAD_PRIO_1;
                 cfg.thrdname     = "im_wx_poll";
+#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
+                cfg.psram_mode = 1;
+#endif
                 tal_thread_create_and_start(&s_poll_thread, NULL, NULL,
                                             weixin_poll_task, NULL, &cfg);
                 goto cleanup;
@@ -951,6 +954,9 @@ OPERATE_RET weixin_bot_start(void)
         /* Token available — start poll immediately */
         cfg.stackDepth = IM_WX_POLL_STACK;
         cfg.thrdname   = "im_wx_poll";
+#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
+        cfg.psram_mode = 1;
+#endif
         OPERATE_RET rt = tal_thread_create_and_start(&s_poll_thread, NULL, NULL,
                                                      weixin_poll_task, NULL, &cfg);
         if (rt != OPRT_OK) {
@@ -964,6 +970,9 @@ OPERATE_RET weixin_bot_start(void)
         }
         cfg.stackDepth = IM_WX_QR_STACK;
         cfg.thrdname   = "im_wx_qr";
+#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
+        cfg.psram_mode = 1;
+#endif
         OPERATE_RET rt = tal_thread_create_and_start(&s_qr_thread, NULL, NULL,
                                                      weixin_qr_login_task, NULL, &cfg);
         if (rt != OPRT_OK) {
