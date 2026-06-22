@@ -49,20 +49,9 @@
 static uint16_t __s_audio_codec_type = AI_AUDIO_CODEC_MP3;
 #endif
 
-/* TTS suppression flag. */
-static volatile bool s_tts_suppressed = FALSE;
 /***********************************************************
 ***********************function define**********************
 ***********************************************************/
-/**
- * @brief Set TTS output suppression state.
- * @param[in] suppressed TRUE to suppress TTS; FALSE to allow it.
- * @return none
- */
-void ai_agent_set_tts_suppressed(bool suppressed)
-{
-    s_tts_suppressed = suppressed;
-}
 
 /**
  * @brief Callback function for AI agent events.
@@ -79,11 +68,7 @@ OPERATE_RET __ai_agent_event_cb(AI_EVENT_TYPE type, AI_PACKET_PT ptype, AI_EVENT
         if (AI_PT_AUDIO == ptype) {
 #if defined(ENABLE_COMP_AI_AUDIO) && (ENABLE_COMP_AI_AUDIO == 1)
             /* Start audio player */
-            if (!s_tts_suppressed) {
-                ai_audio_play_tts_stream(AI_AUDIO_PLAYER_TTS_START, __s_audio_codec_type, NULL, 0);
-            } else {
-                PR_DEBUG("TTS suppressed, skipping audio player start");
-            }
+            ai_audio_play_tts_stream(AI_AUDIO_PLAYER_TTS_START, __s_audio_codec_type, NULL, 0);
 #endif
         }
     } else if ((AI_EVENT_CHAT_BREAK == type)) {
@@ -98,11 +83,7 @@ OPERATE_RET __ai_agent_event_cb(AI_EVENT_TYPE type, AI_PACKET_PT ptype, AI_EVENT
         if (AI_PT_AUDIO == ptype) {
 #if defined(ENABLE_COMP_AI_AUDIO) && (ENABLE_COMP_AI_AUDIO == 1)
             /* Stop audio player */
-            if (!s_tts_suppressed) {
-                ai_audio_play_tts_stream(AI_AUDIO_PLAYER_TTS_STOP, __s_audio_codec_type, NULL, 0);
-            } else {
-                PR_DEBUG("TTS suppressed, skipping audio player stop");
-            }
+            ai_audio_play_tts_stream(AI_AUDIO_PLAYER_TTS_STOP, __s_audio_codec_type, NULL, 0);
 #endif
         }
         /* Notify upper layer that the AI turn has completed. */
@@ -156,11 +137,7 @@ OPERATE_RET __ai_agent_media_data_cb(AI_PACKET_PT type, char *data, uint32_t len
     OPERATE_RET rt = OPRT_OK;
     if(type == AI_PT_AUDIO) {
 #if defined(ENABLE_COMP_AI_AUDIO) && (ENABLE_COMP_AI_AUDIO == 1)
-        if (!s_tts_suppressed) {
-            rt = ai_audio_play_tts_stream(AI_AUDIO_PLAYER_TTS_DATA, __s_audio_codec_type, (char*)data, len);
-        } else {
-            PR_DEBUG("TTS suppressed, skipping audio player data");
-        }
+        rt = ai_audio_play_tts_stream(AI_AUDIO_PLAYER_TTS_DATA, __s_audio_codec_type, (char*)data, len);
 #endif
     } else if(type == AI_PT_VIDEO) {
         /* TBD */
