@@ -386,7 +386,8 @@ static void __popup_dismiss(void)
 #endif
 }
 
-#if defined(ENABLE_COMP_AI_VIDEO) && (ENABLE_COMP_AI_VIDEO == 1)
+#if defined(ENABLE_COMP_AI_VIDEO) && (ENABLE_COMP_AI_VIDEO == 1) && \
+    defined(ENABLE_LVGL_TP) && (ENABLE_LVGL_TP == 1)
 static void __popup_camera_cb(lv_event_t *e)
 {
     (void)e;
