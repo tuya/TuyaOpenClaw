@@ -223,7 +223,6 @@ static void __on_tool_executed(const char *tool_name, OPERATE_RET rt,
     }
 
     /* Suppress TTS and UI output for the remainder of this iteration. */
-    // ai_agent_set_tts_suppressed(TRUE);
     // ai_chat_ui_set_output_suppressed(TRUE);
 }
 
@@ -442,7 +441,6 @@ static void agent_loop_task(void *arg)
             }
 
             /* Restore TTS and UI output for this iteration. */
-            // ai_agent_set_tts_suppressed(FALSE);
             // ai_chat_ui_set_output_suppressed(FALSE);
 
             /* On the last allowed iteration, ask the AI to summarise instead of
