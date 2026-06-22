@@ -73,4 +73,13 @@ if(_APP_NEW_LIBS)
     set(_APP_FULL_HDIR ${HEADER_DIR} ${_APP_NEW_PUBINC})
     deal_with_components("${_APP_NEW_LIBS}" "${_APP_FULL_HDIR}")
     target_link_libraries(${EXAMPLE_LIB} ${_APP_NEW_LIBS})
+
+    # TuyaOpen's PLATFORM_NEED_LIBS = "${EXAMPLE_LIB} tuyaos".
+    # tuyaos is built from TuyaOpen's COMPONENT_LIBS snapshot taken BEFORE this
+    # app's CMakeLists ran, so app-local components (ai_components/IM/lua) are
+    # NOT packed into it. Fold their .o files into EXAMPLE_LIB (tuyaapp) so the
+    # final platform link can resolve them.
+    foreach(_lib ${_APP_NEW_LIBS})
+        target_sources(${EXAMPLE_LIB} PRIVATE $<TARGET_OBJECTS:${_lib}>)
+    endforeach()
 endif()
