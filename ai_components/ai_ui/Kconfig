@@ -1,5 +1,6 @@
 menuconfig ENABLE_COMP_AI_DISPLAY
     bool "enable ai ui"
+    select ENABLE_LIBLVGL
     default y
 
 if(ENABLE_COMP_AI_DISPLAY)

@@ -10,8 +10,12 @@
 
 #include "ai_agent.h"
 #include "ai_chat_main.h"
+#if defined(ENABLE_COMP_AI_DISPLAY) && (ENABLE_COMP_AI_DISPLAY == 1)
 #include "ai_ui_camera.h"
+#endif
+#if defined(ENABLE_COMP_AI_VIDEO) && (ENABLE_COMP_AI_VIDEO == 1)
 #include "ai_video_input.h"
+#endif
 #include "ducky_claw_chat.h"
 #include "agent_loop.h"
 #include "acp_client.h"
