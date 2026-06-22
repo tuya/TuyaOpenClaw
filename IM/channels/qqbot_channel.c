@@ -1393,6 +1393,9 @@ OPERATE_RET qqbot_channel_start(void)
         cfg.stackDepth   = IM_QQ_TOKEN_STACK;
         cfg.priority     = IM_QQ_POLL_PRIO;
         cfg.thrdname     = "im_qq_token";
+#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
+        cfg.psram_mode = 1;
+#endif
         OPERATE_RET rt   = tal_thread_create_and_start(&s_token_thread, NULL, NULL,
                                                        qqbot_token_task, NULL, &cfg);
         if (rt != OPRT_OK) {
@@ -1406,6 +1409,9 @@ OPERATE_RET qqbot_channel_start(void)
         cfg.stackDepth   = IM_QQ_POLL_STACK;
         cfg.priority     = IM_QQ_POLL_PRIO;
         cfg.thrdname     = "im_qq_ws";
+#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
+        cfg.psram_mode = 1;
+#endif
         OPERATE_RET rt   = tal_thread_create_and_start(&s_ws_thread, NULL, NULL,
                                                        qqbot_ws_task, NULL, &cfg);
         if (rt != OPRT_OK) {

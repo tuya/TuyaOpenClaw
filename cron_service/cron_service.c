@@ -445,6 +445,9 @@ OPERATE_RET cron_service_start(void)
     cfg.stackDepth   = CRON_THREAD_STACK;
     cfg.priority     = THREAD_PRIO_1;
     cfg.thrdname     = "claw_cron";
+#if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
+    cfg.psram_mode = 1;
+#endif
 
     OPERATE_RET rt = tal_thread_create_and_start(&s_cron_thread, NULL, NULL,
                                                   cron_task_main, NULL, &cfg);
