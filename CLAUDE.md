@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-DuckyClaw is a hardware-oriented AI agent built on the TuyaOpen C SDK. It runs a Claw-style agent loop on edge devices (Tuya T5AI, ESP32, Raspberry Pi, Linux) that communicates with users via IM channels (Telegram, Discord, Feishu) and executes MCP-style tools on the device.
+DuckyClaw is a Linux-oriented AI agent built on the TuyaOpen C SDK (PLATFORM_LINUX). It runs a Claw-style agent loop on Ubuntu, Raspberry Pi, and other Linux boards, communicates via IM channels, and executes MCP-style tools on the device.
 
 ## Build Commands
 
@@ -16,9 +16,9 @@ cd TuyaOpen && . ./export.sh && cd ..
 
 # Select board config (copies to app_default.config)
 # Available configs are in config/ directory
-cp config/RaspberryPi.config app_default.config           # Raspberry Pi
-cp config/TUYA_T5AI_BOARD_LCD_3.5_CAMERA.config app_default.config  # Tuya T5AI
-cp config/ESP32S3_BREAD_COMPACT_WIFI.config app_default.config      # ESP32-S3
+cp config/Ubuntu.config app_default.config           # Linux x64 (default)
+cp config/RaspberryPi.config app_default.config      # Raspberry Pi
+cp config/DshanPi_A1.config app_default.config       # DshanPi A1 (ARM Linux)
 
 # Build (from TuyaOpen directory, pointing to DuckyClaw as the app)
 cd TuyaOpen

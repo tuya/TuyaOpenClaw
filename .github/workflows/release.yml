@@ -67,22 +67,25 @@ jobs:
           tos.py version
           rm -rf ${{ github.workspace }}/dist ${{ github.workspace }}/release-assets
 
-      - name: Build all firmware configs
+      - name: Build Linux board configs
         env:
-          BUILD_LOG_DIR: ${{ env.BUILD_LOG_BASE }}/all_configs
+          BUILD_LOG_DIR: ${{ env.BUILD_LOG_BASE }}/linux_configs
         run: |
           cd ${{ github.workspace }}/TuyaOpen
           . ./export.sh
           mkdir -p .cache && touch .cache/.dont_prompt_update_platform
           cd ${{ github.workspace }}
-          tos.py dev bac -d ${{ github.workspace }}/dist -o "$BUILD_LOG_DIR"
+          for cfg in config/Ubuntu.config config/RaspberryPi.config config/DshanPi_A1.config; do
+            cp "$cfg" app_default.config
+            tos.py build || exit 1
+          done
 
       - name: Prepare release assets
         run: |
           mkdir -p ${{ github.workspace }}/release-assets
-          cp ${{ github.workspace }}/dist/*.bin ${{ github.workspace }}/release-assets/
+          find ${{ github.workspace }}/dist -type f \( -name '*.elf' -o -name 'DuckyClaw*' -perm -111 \) -exec cp {} ${{ github.workspace }}/release-assets/ \; 2>/dev/null || true
           cd ${{ github.workspace }}/release-assets
-          sha256sum *.bin > SHA256SUMS.txt
+          if ls * 1>/dev/null 2>&1; then sha256sum * > SHA256SUMS.txt; else echo "No release binaries found" && exit 1; fi
 
       - name: Upload release assets
         uses: actions/upload-artifact@v4

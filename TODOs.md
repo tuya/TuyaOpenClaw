@@ -8,10 +8,10 @@
 #### Device MCP Tools
 - [x]  `CRON` Device Tool MCP
 - [x]  `FILE` Device Tool MCP
-- [x]  `EXEC` Device Tool MCP : Raspberry pi exec injection
+- [x]  `EXEC` Device Tool MCP : Linux shell execution (Raspberry Pi / Ubuntu)
 - [x]  `IoT device control` Tool MCP : control devices on the Tuya connected device Network
 #### Storage
-- [x]  SD Card support for fs operations
+- [x]  Local filesystem for fs operations (Linux)
 - [x]  Local `Agent.txt` and `memory.txt` for custom agent prompting and memory local memory support
 #### Others
 - [ ]  Audio ASR input, messaging app input, gateway switching mechanism
@@ -19,9 +19,8 @@
 
 ## Docs TODOs
 - [x]  Free Lic Guide
-- [ ]  Tuya T5 DuckyClaw Quick Start
-- [ ]  ESP32 Ducky Claw
 - [ ]  Raspberry Pi DuckyClaw Quick Start
+- [ ]  Ubuntu/Linux x64 Quick Start
 - [ ]  Device MCP Quick Guide
 ### TuyaOpen.ai
 - [ ]  DuckyClaw Landing Page

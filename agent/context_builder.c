@@ -5,12 +5,13 @@
  * @copyright Copyright (c) 2021-2026 Tuya Inc. All Rights Reserved.
  */
 
- #include "context_builder.h"
+#include "context_builder.h"
 
- #include "tool_files.h"
- #include "memory_manager.h"
- #include "skill_loader.h"
- #include <stdio.h>
+#include "tool_files.h"
+#include "memory_manager.h"
+#include "skill_loader.h"
+#include "tuya_kconfig.h"
+#include <stdio.h>
  
  #include "tal_api.h"
  
@@ -113,7 +114,39 @@
 #else
                      "- File paths must start with " CLAW_FS_ROOT_PATH "/.\n\n");
 #endif
- 
+
+#ifdef VRM_MODEL_PATH
+     off += snprintf(buf + off, size - off,
+                     "- avatar_play_animation: Trigger a body animation on the 3D avatar.\n"
+                     "- avatar_set_emotion: Set the avatar's facial expression.\n"
+                     "- avatar_composite_action: Set animation and emotion in a single call.\n\n"
+                     "## Avatar Behavior\n"
+                     "The device has a 3D avatar. You control it via tool calls.\n"
+                     "Your text is spoken by TTS verbatim — NEVER write tool names "
+                     "or call syntax in your text.\n\n"
+                     "### Avatar Rule (IMPORTANT)\n"
+                     "The device automatically switches facial expressions in real time based on your spoken text, "
+                     "so you do NOT need to call emotion tools frequently.\n"
+                     "Just call avatar_composite_action once at the beginning of your reply to set the overall tone.\n"
+                     "If there is a major emotional shift mid-reply (e.g. from happy to sad), you may call it once more — "
+                     "but no more than twice per reply.\n"
+                     "Use avatar_play_animation only to emphasize key moments, "
+                     "e.g. wave for greetings, crying for touching moments.\n\n"
+                     "Strictly forbidden:\n"
+                     "- Writing tool names, function calls, or bracket syntax in your text\n"
+                     "- Describing actions or emotions in parentheses within text\n"
+                     "- All of the above will be read aloud by TTS\n\n"
+                     "### Facial Emotions\n"
+                     "neutral, happy, sad, angry, surprised, wink, thinking, "
+                     "cool, relaxed, embarrassed, confident, sleep, silly, confused, "
+                     "loving, laughing, shocked, fearful, kissy, delicious.\n\n"
+                     "### Body Animations\n"
+                     "idle_normal, say_hello, standing_greeting, wave, "
+                     "excited, joy, thinking, look_around, show, crying, squat, "
+                     "shoot, bier, idle_boring, happy_idle.\n"
+                     "Use say_hello/wave at conversation start. Animations auto-return to idle.\n\n");
+#endif
+
      off += snprintf(buf + off, size - off,
                      "## Memory\n"
                      "You have persistent memory stored on local flash:\n"

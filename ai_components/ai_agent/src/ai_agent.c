@@ -74,13 +74,8 @@ OPERATE_RET __ai_agent_event_cb(AI_EVENT_TYPE type, AI_PACKET_PT ptype, AI_EVENT
     if (AI_EVENT_START == type) {
         if (AI_PT_AUDIO == ptype) {
 #if defined(ENABLE_COMP_AI_AUDIO) && (ENABLE_COMP_AI_AUDIO == 1)
-            /* Start audio player */
-            ai_audio_play_tts_stream(AI_AUDIO_PLAYER_TTS_START, __s_audio_codec_type, (char*)eid, strlen(eid));
-            // if (!s_tts_suppressed) {
-            //     ai_audio_play_tts_stream(AI_AUDIO_PLAYER_TTS_START, __s_audio_codec_type, (char*)eid, strlen(eid));
-            // } else {
-            //     PR_DEBUG("TTS suppressed, playing audio player start");
-            // }
+            /* SDK passes NULL eid for audio output lifecycle events. */
+            ai_audio_play_tts_stream(AI_AUDIO_PLAYER_TTS_START, __s_audio_codec_type, NULL, 0);
 #endif
         }
     } else if ((AI_EVENT_CHAT_BREAK == type)) {
@@ -94,13 +89,7 @@ OPERATE_RET __ai_agent_event_cb(AI_EVENT_TYPE type, AI_PACKET_PT ptype, AI_EVENT
     } else if ((AI_EVENT_END == type)) {
         if (AI_PT_AUDIO == ptype) {
 #if defined(ENABLE_COMP_AI_AUDIO) && (ENABLE_COMP_AI_AUDIO == 1)
-            /* Stop audio player */
-            ai_audio_play_tts_stream(AI_AUDIO_PLAYER_TTS_STOP, __s_audio_codec_type, (char*)eid, strlen(eid));
-            // if (!s_tts_suppressed) {
-            //     ai_audio_play_tts_stream(AI_AUDIO_PLAYER_TTS_STOP, __s_audio_codec_type, (char*)eid, strlen(eid));
-            // } else {
-            //     PR_DEBUG("TTS suppressed, playing audio player stop");
-            // }
+            ai_audio_play_tts_stream(AI_AUDIO_PLAYER_TTS_STOP, __s_audio_codec_type, NULL, 0);
 #endif
         }
         /* Notify upper layer that the AI turn has completed. */
@@ -179,7 +168,7 @@ OPERATE_RET __ai_agent_media_data_cb(AI_PACKET_PT type, char *data, uint32_t len
 @param eof End of file flag
 @return OPERATE_RET Operation result
 */
-OPERATE_RET __ai_agent_text_cb(AI_TEXT_TYPE_E type, cJSON *root, bool eof)
+OPERATE_RET __ai_agent_text_cb(AI_TEXT_TYPE_E type, cJSON *root, BOOL_T eof)
 {    
     return ai_text_process(type, root, eof);
 }

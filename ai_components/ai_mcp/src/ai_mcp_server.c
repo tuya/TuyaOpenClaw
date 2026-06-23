@@ -73,6 +73,8 @@ typedef struct {
 
 typedef struct {
     char *id;
+    char *sid;
+    char *eid;
     MCP_PROPERTY_LIST_T *arguments;
     MCP_TOOL_T *tool;
 } TOOL_CALL_MSG_T;
@@ -81,6 +83,8 @@ typedef struct {
 ***********************variable define**********************
 ***********************************************************/
 static MCP_SERVER_CTX_T s_server_ctx;
+static char *s_curr_mcp_sid = NULL;
+static char *s_curr_mcp_eid = NULL;
 
 /***********************************************************
 ***********************function define**********************
@@ -754,9 +758,72 @@ cJSON *ai_mcp_tool_to_json(const MCP_TOOL_T *tool)
 
 /* === Server Management Functions === */
 
+/**
+ * @brief Send MCP JSON-RPC response to the cloud AI session.
+ * @param[in] sid Session id (falls back to current MCP sid when empty)
+ * @param[in] eid Event id (falls back to current MCP eid when empty)
+ * @param[in] message JSON-RPC payload
+ * @return none
+ */
+static void __send_mcp_response(const char *sid, const char *eid, const char *message)
+{
+    const char *use_sid = sid;
+    const char *use_eid = eid;
+
+    if (!use_sid || use_sid[0] == '\0') {
+        use_sid = s_curr_mcp_sid ? s_curr_mcp_sid : "";
+    }
+    if (!use_eid || use_eid[0] == '\0') {
+        use_eid = s_curr_mcp_eid ? s_curr_mcp_eid : "";
+    }
+
+    tuya_ai_agent_mcp_response((CHAR_T *)use_sid, (CHAR_T *)use_eid, (CHAR_T *)message);
+}
+
 VOID __send_message_default(const char *message)
 {
-    tuya_ai_agent_mcp_response((char *)message);
+    __send_mcp_response(
+        s_curr_mcp_sid ? s_curr_mcp_sid : "",
+        s_curr_mcp_eid ? s_curr_mcp_eid : "",
+        message);
+}
+
+static OPERATE_RET __ai_mcp_agent_dispatch(CHAR_T *sid, CHAR_T *eid, CONST ty_cJSON *json, VOID *user_data)
+{
+    OPERATE_RET rt = OPRT_OK;
+
+    if (s_curr_mcp_sid) {
+        AI_MCP_FREE(s_curr_mcp_sid);
+        s_curr_mcp_sid = NULL;
+    }
+    if (s_curr_mcp_eid) {
+        AI_MCP_FREE(s_curr_mcp_eid);
+        s_curr_mcp_eid = NULL;
+    }
+
+    if (sid && sid[0] != '\0') {
+        s_curr_mcp_sid = mm_strdup(sid);
+        if (!s_curr_mcp_sid) {
+            return OPRT_MALLOC_FAILED;
+        }
+    }
+    if (eid && eid[0] != '\0') {
+        s_curr_mcp_eid = mm_strdup(eid);
+        if (!s_curr_mcp_eid) {
+            AI_MCP_FREE(s_curr_mcp_sid);
+            s_curr_mcp_sid = NULL;
+            return OPRT_MALLOC_FAILED;
+        }
+    }
+
+    rt = ai_mcp_server_parse_message(json, user_data);
+
+    AI_MCP_FREE(s_curr_mcp_sid);
+    s_curr_mcp_sid = NULL;
+    AI_MCP_FREE(s_curr_mcp_eid);
+    s_curr_mcp_eid = NULL;
+
+    return rt;
 }
 
 void ai_mcp_server_set_tool_exec_hook(MCP_TOOL_EXEC_HOOK_CB cb, void *user_data)
@@ -794,7 +861,7 @@ OPERATE_RET ai_mcp_server_init(const char *name, const char *version)
         return OPRT_MALLOC_FAILED;
     }
     s_server_ctx.send_message = __send_message_default;
-    tuya_ai_agent_mcp_set_cb(ai_mcp_server_parse_message, NULL);
+    tuya_ai_agent_mcp_set_cb(__ai_mcp_agent_dispatch, NULL);
     s_server_ctx.initialized = TRUE;
     return OPRT_OK;
 }
@@ -861,7 +928,7 @@ MCP_TOOL_T *ai_mcp_server_find_tool(const char *name)
 
 /* === Message Handling Functions === */
 
-static OPERATE_RET __reply_result(const char *id, cJSON *result)
+static OPERATE_RET __reply_result(const char *sid, const char *eid, const char *id, cJSON *result)
 {
     cJSON *response;
     char *json_str;
@@ -880,8 +947,7 @@ static OPERATE_RET __reply_result(const char *id, cJSON *result)
     json_str = cJSON_PrintUnformatted(response);
     if (json_str) {
         PR_DEBUG("MCP Reply: %s", json_str);
-        if (s_server_ctx.send_message)
-            s_server_ctx.send_message(json_str);
+        __send_mcp_response(sid, eid, json_str);
         cJSON_free(json_str);
     }
 
@@ -889,7 +955,7 @@ static OPERATE_RET __reply_result(const char *id, cJSON *result)
     return OPRT_OK;
 }
 
-static OPERATE_RET __reply_error(const char *id, int error_code, const char *message)
+static OPERATE_RET __reply_error(const char *sid, const char *eid, const char *id, int error_code, const char *message)
 {
     cJSON *response, *error;
     char *json_str;
@@ -916,7 +982,7 @@ static OPERATE_RET __reply_error(const char *id, int error_code, const char *mes
     json_str = cJSON_PrintUnformatted(response);
     if (json_str) {
         PR_DEBUG("MCP Error Reply: %s", json_str);
-        s_server_ctx.send_message(json_str);
+        __send_mcp_response(sid, eid, json_str);
         cJSON_free(json_str);
     }
 
@@ -932,7 +998,8 @@ static VOID_T __tool_call(VOID_T *data)
 
     TOOL_CALL_MSG_T *msg = (TOOL_CALL_MSG_T *)data;
     if (!msg || !msg->tool || !msg->arguments) {
-        __reply_error(msg ? msg->id : NULL, MCP_ERROR_INTERNAL, "Invalid tool call message");
+        __reply_error(msg ? msg->sid : NULL, msg ? msg->eid : NULL,
+                      msg ? msg->id : NULL, MCP_ERROR_INTERNAL, "Invalid tool call message");
         goto exit;
     }
 
@@ -942,7 +1009,7 @@ static VOID_T __tool_call(VOID_T *data)
     rt = msg->tool->callback(msg->arguments, &ret_val, msg->tool->user_data);
     if (rt != OPRT_OK) {
         ai_mcp_return_value_cleanup(&ret_val);
-        __reply_error(msg->id, MCP_ERROR_INTERNAL, "Tool execution failed");
+        __reply_error(msg->sid, msg->eid, msg->id, MCP_ERROR_INTERNAL, "Tool execution failed");
         if (s_server_ctx.tool_exec_hook) {
             s_server_ctx.tool_exec_hook(msg->tool->name, rt, NULL,
                                         s_server_ctx.tool_exec_hook_user_data);
@@ -962,18 +1029,26 @@ static VOID_T __tool_call(VOID_T *data)
     ai_mcp_return_value_cleanup(&ret_val);
 
     if (!result) {
-        __reply_error(msg->id, MCP_ERROR_INTERNAL, "Failed to format result");
+        __reply_error(msg->sid, msg->eid, msg->id, MCP_ERROR_INTERNAL, "Failed to format result");
         goto exit;
     }
 
-    __reply_result(msg->id, result);
+    __reply_result(msg->sid, msg->eid, msg->id, result);
 
 exit:
     if (msg) {
-        if (msg->id)
+        if (msg->id) {
             AI_MCP_FREE(msg->id);
-        if (msg->arguments)
+        }
+        if (msg->sid) {
+            AI_MCP_FREE(msg->sid);
+        }
+        if (msg->eid) {
+            AI_MCP_FREE(msg->eid);
+        }
+        if (msg->arguments) {
             ai_mcp_property_list_destroy(msg->arguments);
+        }
         AI_MCP_FREE(msg);
     }
 }
@@ -1004,7 +1079,7 @@ static OPERATE_RET __handle_initialize(cJSON *params, const char *id)
         cJSON_AddItemToObject(root, "serverInfo", node);
     }
 
-    return __reply_result(id, root);
+    return __reply_result(NULL, NULL, id, root);
 }
 
 static OPERATE_RET __handle_tools_list(cJSON *params, const char *id)
@@ -1075,7 +1150,7 @@ static OPERATE_RET __handle_tools_list(cJSON *params, const char *id)
     }
 
     cJSON_AddItemToObject(result, "tools", tools_array);
-    return __reply_result(id, result);
+    return __reply_result(NULL, NULL, id, result);
 }
 
 static OPERATE_RET __parse_property_value(MCP_PROPERTY_LIST_T *prop_list,
@@ -1227,6 +1302,21 @@ static OPERATE_RET __handle_tools_call(cJSON *params, const char *id)
         }
     }
 
+    if (s_curr_mcp_sid && s_curr_mcp_sid[0] != '\0') {
+        msg->sid = mm_strdup(s_curr_mcp_sid);
+        if (!msg->sid) {
+            error_msg = "Failed to allocate session id";
+            goto err;
+        }
+    }
+    if (s_curr_mcp_eid && s_curr_mcp_eid[0] != '\0') {
+        msg->eid = mm_strdup(s_curr_mcp_eid);
+        if (!msg->eid) {
+            error_msg = "Failed to allocate event id";
+            goto err;
+        }
+    }
+
     /* Call the tool in workqueue */
     ret = tal_workq_schedule(WORKQ_SYSTEM, __tool_call, msg);
     if (ret != OPRT_OK) {
@@ -1238,13 +1328,21 @@ static OPERATE_RET __handle_tools_call(cJSON *params, const char *id)
 
 err:
     if (msg) {
-        if (msg->id)
+        if (msg->id) {
             AI_MCP_FREE(msg->id);
-        if (msg->arguments)
+        }
+        if (msg->sid) {
+            AI_MCP_FREE(msg->sid);
+        }
+        if (msg->eid) {
+            AI_MCP_FREE(msg->eid);
+        }
+        if (msg->arguments) {
             ai_mcp_property_list_destroy(msg->arguments);
+        }
         AI_MCP_FREE(msg);
     }
-    return __reply_error(id, error_code, error_msg);
+    return __reply_error(NULL, NULL, id, error_code, error_msg);
 }
 
 OPERATE_RET ai_mcp_server_parse_message(const cJSON *json, VOID *user_data)
@@ -1304,7 +1402,7 @@ OPERATE_RET ai_mcp_server_parse_message(const cJSON *json, VOID *user_data)
         return __handle_tools_call(node, id);
     } else {
         PR_ERR("Method not implemented: %s", method);
-        return __reply_error(id, MCP_ERROR_METHOD_NOT_FOUND, "Method not implemented");
+        return __reply_error(NULL, NULL, id, MCP_ERROR_METHOD_NOT_FOUND, "Method not implemented");
     }
 }
 

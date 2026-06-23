@@ -1,4 +1,4 @@
-menu "configure app (DuckyClaw) "
+menu "configure app (DuckyClaw / Linux)"
 
     config SYS_BUS_OUTBOUND_STACK_SIZE
         int "SYS bus outbound thread stack size (bytes)"
@@ -17,7 +17,53 @@ rsource "./cron_service/Kconfig"
 rsource "./gateway/Kconfig"
 rsource "./IM/Kconfig"
 rsource "./agent/Kconfig"
-rsource "./components/lua/Kconfig"
 rsource "./tools/Kconfig"
+
+menu "VRM Viewer Config"
+
+config VRM_MODEL_PATH
+    string "3D model file path (VRM/PMX/GLB/FBX)"
+    default "resources/models/Hayaseyuuka.vrm"
+    help
+      Path to the 3D model file to load.
+      Supported formats: VRM, PMX, GLB, GLTF, FBX, OBJ, etc.
+      Leave empty to disable the VRM viewer.
+
+config VRM_ANIM_DIR
+    string "VRMA animation directory (optional)"
+    default "resources/animations"
+    help
+      Path to a directory containing .vrma animation files.
+      All .vrma files will be loaded and can be switched at runtime.
+      Leave empty for no animation (static pose).
+
+config VRM_WINDOW_WIDTH
+    int "VRM viewer window width"
+    default 1024
+
+config VRM_WINDOW_HEIGHT
+    int "VRM viewer window height"
+    default 768
+
+config VRM_FULLSCREEN
+    bool "Start VRM viewer in fullscreen"
+    default n
+
+config VRM_SCENE_DIR
+    string "Scene directory (skybox cubemap images)"
+    default ""
+    help
+      Path to a directory containing cubemap face images for the skybox.
+      Leave empty to use the default gradient background.
+
+config VRM_SCENE_PARENT_DIR
+    string "Scene parent directory (contains skybox folders)"
+    default "resources/scenes"
+    help
+      Parent directory that contains multiple skybox cubemap sub-directories.
+      The settings overlay will scan this directory and list every sub-directory
+      as a selectable scene.
+
+endmenu
 
 endmenu

@@ -1,25 +1,4 @@
 menu "Tools (Filesystem) Config"
-    config CLAW_USE_SDCARD
-        bool "Use SD card for filesystem"
-        default n
-        help
-            When enabled (y), use SD card filesystem (tkl_fs, root /sdcard).
-            When disabled (n), use internal flash (tal_fs).
-            Typically disable on Linux (PLATFORM_LINUX) targets.
-
-    config ENABLE_HARDWARE_MCP
-        bool "Enable hardware MCP"
-        default n
-        help
-            When enabled (y), enable hardware MCP tools.
-            When disabled (n), disable hardware MCP tools.
-
-    config ENABLE_LUA_TOOL
-        bool "Enable lua_run_script MCP tool"
-        depends on ENABLE_LUA
-        default n
-        help
-            Register the lua_run_script MCP tool that lets the cloud-side
-            LLM execute an inline Lua 5.5 snippet under the embedded
-            sandboxed runtime. Requires ENABLE_LUA to be set.
+    comment "Linux targets use the local filesystem (tal_fs). MCU-only options"
+    comment "(SD card, hardware MCP, embedded Lua) are not available in this fork."
 endmenu

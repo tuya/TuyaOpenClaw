@@ -38,16 +38,20 @@ jobs:
           rm -rf ${{ github.workspace }}/dist
           echo "::endgroup::"
 
-      - name: Build All Board Configs
+      - name: Build Linux board configs
         env:
-          BUILD_LOG_DIR: ${{ env.BUILD_LOG_BASE }}/all_configs
+          BUILD_LOG_DIR: ${{ env.BUILD_LOG_BASE }}/linux_configs
         run: |
-          echo "::group::Building all board configs"
+          echo "::group::Building Linux board configs"
           cd ${{ github.workspace }}/TuyaOpen
           . ./export.sh
           mkdir -p .cache && touch .cache/.dont_prompt_update_platform
           cd ${{ github.workspace }}
-          tos.py dev bac -d ${{ github.workspace }}/dist -o "$BUILD_LOG_DIR"
+          for cfg in config/Ubuntu.config config/RaspberryPi.config config/DshanPi_A1.config; do
+            echo "=== Building $cfg ==="
+            cp "$cfg" app_default.config
+            tos.py build || exit 1
+          done
           echo "::endgroup::"
 
       - name: Set timestamp

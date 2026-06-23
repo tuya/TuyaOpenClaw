@@ -209,6 +209,12 @@ static void __on_tool_executed(const char *tool_name, OPERATE_RET rt,
 
     PR_DEBUG("Tool exec hook: %s", buf);
 
+    /* Avatar tools are fire-and-forget; skip tool-loop re-iteration. */
+    if (strncmp(tool_name, "avatar_", 7) == 0) {
+        PR_DEBUG("Skipping re-iteration for fire-and-forget tool: %s", tool_name);
+        return;
+    }
+
     /* Record in sliding-window history */
     build_current_context("tool", buf);
 

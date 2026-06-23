@@ -17,6 +17,12 @@
 #include "app_im.h"
 #include "sys_bus.h"
 #include "tal_log.h"
+#include "tuya_kconfig.h"
+
+#ifdef VRM_MODEL_PATH
+#include "gl_renderer.h"
+#include "emotion/text_emotion.h"
+#endif
 
 #if defined(ENABLE_WIFI) && (ENABLE_WIFI == 1)
 #include "tkl_wifi.h"
@@ -215,12 +221,21 @@ static void __ai_chat_handle_event(AI_NOTIFY_EVENT_T *event)
         }
         memset(stream_data, 0, STREAM_DATA_MAX_LEN);
         data_write_offset = 0;
+#ifdef VRM_MODEL_PATH
+        text_emotion_reset();
+#endif
 
         AI_NOTIFY_TEXT_T *text = (AI_NOTIFY_TEXT_T *)event->data;
         if (text && text->datalen > 0 && text->data && data_write_offset + text->datalen <= STREAM_DATA_MAX_LEN) {
             memcpy(stream_data + data_write_offset, text->data, text->datalen);
             data_write_offset += text->datalen;
+#ifdef VRM_MODEL_PATH
+            text_emotion_feed((const char *)text->data, (int)text->datalen);
+#endif
         }
+#ifdef VRM_MODEL_PATH
+        vrm_viewer_set_subtitle((char *)stream_data);
+#endif
     } break;
     case AI_USER_EVT_TEXT_STREAM_DATA: {
         AI_NOTIFY_TEXT_T *text = (AI_NOTIFY_TEXT_T *)event->data;
@@ -236,11 +251,20 @@ static void __ai_chat_handle_event(AI_NOTIFY_EVENT_T *event)
 
         memcpy(stream_data + data_write_offset, text->data, text->datalen);
         data_write_offset += text->datalen;
+#ifdef VRM_MODEL_PATH
+        if (text && text->data && text->datalen > 0) {
+            text_emotion_feed((const char *)text->data, (int)text->datalen);
+        }
+        vrm_viewer_set_subtitle((char *)stream_data);
+#endif
     } break;
     case AI_USER_EVT_TEXT_STREAM_STOP: {
         /* Accumulate the final chunk into stream_data; do NOT post the
          * semaphore here.  The AI may still have MCP tool calls to execute
          * after the text stream ends.  We wait for AI_USER_EVT_END instead. */
+#ifdef VRM_MODEL_PATH
+        text_emotion_flush();
+#endif
         build_current_context("assistant", (char *)stream_data);
         /* Keep stream_data intact so AI_USER_EVT_END can read it */
     } break;
@@ -251,6 +275,29 @@ static void __ai_chat_handle_event(AI_NOTIFY_EVENT_T *event)
         agent_loop_notify_turn_done();
 
         memset(stream_data, 0, STREAM_DATA_MAX_LEN);
+        data_write_offset = 0;
+    } break;
+    case AI_USER_EVT_LLM_EMOTION:
+    case AI_USER_EVT_EMOTION: {
+#ifdef VRM_MODEL_PATH
+        AI_NOTIFY_EMO_T *emo = (AI_NOTIFY_EMO_T *)(event->data);
+        if (emo && emo->name) {
+            vrm_viewer_set_emotion(emo->name, 1.0f, 0.0f);
+            text_emotion_set_base(emo->name);
+        }
+#endif
+    } break;
+    case AI_USER_EVT_PLAY_END:
+    case AI_USER_EVT_TTS_ABORT:
+    case AI_USER_EVT_TTS_ERROR:
+    case AI_USER_EVT_CHAT_BREAK:
+    case AI_USER_EVT_TEXT_STREAM_ABORT: {
+#ifdef VRM_MODEL_PATH
+        vrm_viewer_set_subtitle("");
+#endif
+        if (stream_data) {
+            memset(stream_data, 0, STREAM_DATA_MAX_LEN);
+        }
         data_write_offset = 0;
     } break;
     default: break;

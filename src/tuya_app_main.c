@@ -56,12 +56,19 @@
 #include "acp_client.h"
 #include "agent_loop.h"
 
+#include "tuya_kconfig.h"
+#include "gl_renderer.h"
+#include "app_avatar_mcp.h"
+
 #if defined(ENABLE_QRCODE) && (ENABLE_QRCODE == 1)
 #include "qrencode_print.h"
 #endif
 
 /* Tuya device handle */
 tuya_iot_client_t ai_client;
+
+/* Tuya IoT yield thread handle (used when VRM viewer blocks main thread) */
+static THREAD_HANDLE s_tuya_yield_thread = NULL;
 
 /* Tuya license information (uuid authkey) */
 tuya_iot_license_t license;
@@ -311,6 +318,14 @@ bool user_network_check(void)
     return status == NETMGR_LINK_DOWN ? false : true;
 }
 
+static void tuya_yield_thread(void *arg)
+{
+    (void)arg;
+    for (;;) {
+        tuya_iot_yield(&ai_client);
+    }
+}
+
 void user_main(void)
 {
     int ret = OPRT_OK;
@@ -429,6 +444,11 @@ void user_main(void)
         PR_ERR("agent_loop_init failed rt:%d", ret);
     }
 
+    ret = app_avatar_mcp_init();
+    if (ret != OPRT_OK) {
+        PR_ERR("app_avatar_mcp_init failed rt:%d", ret);
+    }
+
     /* Start tuya iot task */
     tuya_iot_start(&ai_client);
 
@@ -436,9 +456,35 @@ void user_main(void)
 
     reset_netconfig_check();
 
-    for (;;) {
-        /* Loop to receive packets, and handles client keepalive */
-        tuya_iot_yield(&ai_client);
+#if defined(VRM_MODEL_PATH)
+    if (VRM_MODEL_PATH[0] != '\0') {
+        THREAD_CFG_T yield_cfg = {0};
+        yield_cfg.stackDepth = 4096;
+        yield_cfg.priority = 4;
+        yield_cfg.thrdname = "tuya_yield";
+        tal_thread_create_and_start(&s_tuya_yield_thread, NULL, NULL,
+                                    tuya_yield_thread, NULL, &yield_cfg);
+
+        {
+            const char *vrm_model_path = VRM_MODEL_PATH;
+#ifdef VRM_ANIM_DIR
+            const char *vrm_anim_dir = (VRM_ANIM_DIR[0] != '\0') ? VRM_ANIM_DIR : NULL;
+#else
+            const char *vrm_anim_dir = NULL;
+#endif
+            PR_NOTICE("Starting VRM viewer: model=%s anim_dir=%s", vrm_model_path,
+                      vrm_anim_dir ? vrm_anim_dir : "(none)");
+            int vrm_ret = vrm_viewer_run(vrm_model_path, vrm_anim_dir);
+            if (vrm_ret != 0) {
+                PR_ERR("vrm_viewer_run() failed: %d", vrm_ret);
+            }
+        }
+    } else
+#endif
+    {
+        for (;;) {
+            tuya_iot_yield(&ai_client);
+        }
     }
 }
 
