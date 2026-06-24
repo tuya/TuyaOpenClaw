@@ -12,7 +12,28 @@ menu "configure app (DuckyClaw) "
         help
             Stack size in bytes for the IM bridge thread (default 4*1024).
 
-rsource "./ai_components/Kconfig"
+config DUCKYCLAW_USE_AI_COMPONENTS
+    bool
+    default y
+    select ENABLE_AI_COMPONENTS
+
+# DuckyClaw moves large app-level buffers (acp_client / ws_server / IM dedup rings)
+# from static .bss into PSRAM heap via claw_malloc / im_calloc, which only does
+# anything when ENABLE_EXT_RAM is on at the SDK level. Some board Kconfigs
+# (e.g. ESP32S3_BREAD_COMPACT_WIFI in upstream TuyaOpen) don't `select
+# ENABLE_EXT_RAM` on their own — opt into it from the app side so DuckyClaw
+# doesn't have to patch the submodule. Boards that already select it
+# (DNESP32S3 family, WAVESHARE_ESP32S3, T5AI variants with PSRAM) are unaffected.
+config DUCKYCLAW_USE_EXT_RAM
+    bool "DuckyClaw: enable external PSRAM heap"
+    default y
+    select ENABLE_EXT_RAM
+    help
+      Enable ENABLE_EXT_RAM from the application layer so claw_malloc,
+      im_calloc, and tal_thread `psram_mode=1` land in PSRAM. Turn off
+      on platforms without PSRAM (the option has no effect on platforms
+      that don't declare ENABLE_EXT_RAM).
+
 rsource "./cron_service/Kconfig"
 rsource "./gateway/Kconfig"
 rsource "./IM/Kconfig"

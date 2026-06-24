@@ -202,15 +202,6 @@ void user_event_handler_on(tuya_iot_client_t *client, tuya_event_msg_t *event)
 
     /* MQTT with tuya cloud is connected, device online */
     case TUYA_EVENT_MQTT_CONNECTED:
-#if defined(PLATFORM_ESP32) && (PLATFORM_ESP32 == 1)
-        /* NOTE: this is for ESP32 only */
-        uint32_t free_heap = tal_system_get_free_heap_size();
-        PR_INFO("BLE init Free heap size:%d", free_heap);
-        netcfg_stop(NETCFG_TUYA_BLE);
-        tuya_ble_deinit();
-        free_heap = tal_system_get_free_heap_size();
-        PR_INFO("BLE deinit Free heap size:%d", free_heap);
-#endif
         PR_INFO("Device MQTT Connected!");
         NW_IP_S ip;
         memset(&ip, 0, sizeof(ip));
@@ -475,15 +466,13 @@ static void tuya_app_thread(void *arg)
 
 void tuya_app_main(void)
 {
-#if defined(PLATFORM_T5) && (PLATFORM_T5 == 1)
-    extern void tkl_system_psram_malloc_force_set(bool enable);
-    tkl_system_psram_malloc_force_set(true);
-#endif
-
     THREAD_CFG_T thrd_param = {0};
-    thrd_param.stackDepth = 1024 * 4;
-    thrd_param.priority = THREAD_PRIO_1;
-    thrd_param.thrdname = "tuya_app_main";
+    thrd_param.stackDepth   = 4096;
+    thrd_param.priority     = 4;
+    thrd_param.thrdname     = "tuya_app_main";
+    /* Stack must be internal DRAM: esp_partition_mmap / flash pause cache (ESP-SR) asserts
+     * esp_task_stack_is_sane_cache_disabled() — PSRAM stacks fail that check (see IDF cache_utils.c). */
+    thrd_param.psram_mode   = 0;
     tal_thread_create_and_start(&ty_app_thread, NULL, NULL, tuya_app_thread, NULL, &thrd_param);
 }
 #endif
