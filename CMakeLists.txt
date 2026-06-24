@@ -46,7 +46,6 @@ target_sources(${EXAMPLE_LIB}
 set(_APP_COMP_LIBS_BEFORE "${COMPONENT_LIBS}")
 set(_APP_COMP_PUBINC_BEFORE "${COMPONENT_PUBINC}")
 
-add_subdirectory(${APP_PATH}/ai_components ${CMAKE_BINARY_DIR}/ai_components)
 add_subdirectory(${APP_PATH}/IM ${CMAKE_BINARY_DIR}/IM)
 add_subdirectory(${APP_PATH}/components/lua ${CMAKE_BINARY_DIR}/components/lua)
 
@@ -83,3 +82,67 @@ if(_APP_NEW_LIBS)
         target_sources(${EXAMPLE_LIB} PRIVATE $<TARGET_OBJECTS:${_lib}>)
     endforeach()
 endif()
+
+########################################
+# DuckyClaw ai_components overlay
+########################################
+# Surgically replace individual translation units inside the upstream
+# TuyaOpen ai_components library targets (ai_mcp, ai_agent, ai_main) with
+# DuckyClaw-side patches kept under overlay/. The SDK submodule stays
+# pristine; only this app's CMake graph diverges. TuyaOpen processes
+# src/ai_components/ before this file is `include`d, so the upstream targets
+# already exist when we reach here.
+set(_DC_OVERLAY ${APP_PATH}/overlay/ai_components)
+
+function(_dc_overlay_source target rel_path)
+    if(NOT TARGET ${target})
+        message(WARNING "[DC overlay] target '${target}' not defined; skip ${rel_path}")
+        return()
+    endif()
+    set(_overlay_file ${_DC_OVERLAY}/${rel_path})
+    if(NOT EXISTS ${_overlay_file})
+        message(FATAL_ERROR "[DC overlay] missing overlay file: ${_overlay_file}")
+    endif()
+    get_target_property(_srcs ${target} SOURCES)
+    get_filename_component(_basename ${rel_path} NAME)
+    set(_new_srcs)
+    set(_found_upstream FALSE)
+    foreach(_s ${_srcs})
+        get_filename_component(_n ${_s} NAME)
+        if(_n STREQUAL "${_basename}")
+            set(_found_upstream TRUE)
+        else()
+            list(APPEND _new_srcs ${_s})
+        endif()
+    endforeach()
+    list(APPEND _new_srcs ${_overlay_file})
+    set_target_properties(${target} PROPERTIES SOURCES "${_new_srcs}")
+    if(_found_upstream)
+        message(STATUS "[DC overlay] ${target} <- ${_overlay_file} (replaced upstream ${_basename})")
+    else()
+        message(WARNING "[DC overlay] ${target}: upstream ${_basename} not found in SOURCES; overlay appended anyway")
+    endif()
+endfunction()
+
+# ai_mcp: header (BEFORE PUBLIC on the lib + BEFORE PRIVATE on EXAMPLE_LIB)
+# The lib-level prepend covers ai_mcp's own .c files and anything that does
+# target_link_libraries(... ai_mcp). But EXAMPLE_LIB (tuyaapp) gets its
+# include paths from the COMPONENT_PUBINC variable that was snapshotted in
+# ai_mcp's own CMakeLists BEFORE our overlay ran, so EXAMPLE_LIB also needs
+# the overlay path explicitly — otherwise agent_loop.c (which lives in
+# DuckyClaw/agent/ and compiles into EXAMPLE_LIB) keeps seeing the upstream
+# ai_mcp_server.h without the tool_exec_hook declarations.
+if(TARGET ai_mcp)
+    target_include_directories(ai_mcp BEFORE PUBLIC ${_DC_OVERLAY}/ai_mcp/include)
+    message(STATUS "[DC overlay] ai_mcp include path prepended: ${_DC_OVERLAY}/ai_mcp/include")
+endif()
+target_include_directories(${EXAMPLE_LIB} BEFORE PRIVATE ${_DC_OVERLAY}/ai_mcp/include)
+message(STATUS "[DC overlay] ${EXAMPLE_LIB} include path prepended: ${_DC_OVERLAY}/ai_mcp/include")
+
+_dc_overlay_source(ai_mcp   ai_mcp/src/ai_mcp_server.c)
+_dc_overlay_source(ai_agent ai_agent/src/ai_agent.c)
+_dc_overlay_source(ai_main  ai_main/src/ai_chat_main.c)
+# ai_audio: keep mic capture ringbuf + record_task in internal SRAM even when
+# ENABLE_EXT_RAM=1 (PSRAM access latency breaks AFE WebRTC VAD timing on the
+# ESP32S3 BREAD_COMPACT_WIFI raw-I2S mic path).
+_dc_overlay_source(ai_audio ai_audio/src/ai_audio_input.c)
