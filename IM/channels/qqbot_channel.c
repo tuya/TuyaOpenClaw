@@ -32,7 +32,12 @@ static const char *TAG = "qqbot";
 #define QQ_RECONNECT_MAX_MS    IM_QQ_FAIL_MAX_MS
 #define QQ_TOKEN_FAIL_BASE_MS  IM_QQ_TOKEN_FAIL_BASE_MS
 #define QQ_TOKEN_FAIL_MAX_MS   IM_QQ_TOKEN_FAIL_MAX_MS
+/* Kconfig override; default 64 entries = 512 B. */
+#if defined(IM_QQ_DEDUP_CACHE_SIZE)
+#define QQ_DEDUP_CACHE_SIZE    IM_QQ_DEDUP_CACHE_SIZE
+#else
 #define QQ_DEDUP_CACHE_SIZE    64
+#endif
 #define QQ_PROXY_READ_SLICE_MS 1000
 #define QQ_PROXY_READ_TOTAL_MS 15000
 
@@ -50,8 +55,9 @@ static MUTEX_HANDLE  s_token_mutex       = NULL;
 static THREAD_HANDLE s_token_thread      = NULL;
 static THREAD_HANDLE s_ws_thread         = NULL;
 
-static uint64_t s_seen_msg_keys[QQ_DEDUP_CACHE_SIZE] = {0};
-static size_t   s_seen_msg_idx                       = 0;
+/* PSRAM-allocated at qqbot_channel_init (was inline .bss). */
+static uint64_t *s_seen_msg_keys = NULL;
+static size_t    s_seen_msg_idx  = 0;
 
 /* ================================================================
  * Connection Struct
@@ -832,7 +838,7 @@ static OPERATE_RET qq_http_post(const char *host, const char *path, const char *
 
 static bool seen_msg_contains(const char *msg_id)
 {
-    if (!msg_id || msg_id[0] == '\0') {
+    if (!msg_id || msg_id[0] == '\0' || !s_seen_msg_keys) {
         return false;
     }
     uint64_t key = im_fnv1a64(msg_id);
@@ -846,7 +852,7 @@ static bool seen_msg_contains(const char *msg_id)
 
 static void seen_msg_insert(const char *msg_id)
 {
-    if (!msg_id || msg_id[0] == '\0') {
+    if (!msg_id || msg_id[0] == '\0' || !s_seen_msg_keys) {
         return;
     }
     s_seen_msg_keys[s_seen_msg_idx] = im_fnv1a64(msg_id);
@@ -1349,6 +1355,16 @@ OPERATE_RET qqbot_send_message(const char *chat_id, const char *text)
 
 OPERATE_RET qqbot_channel_init(void)
 {
+    /* PSRAM-allocate dedup ring (was inline .bss). */
+    if (!s_seen_msg_keys) {
+        s_seen_msg_keys = (uint64_t *)im_calloc(QQ_DEDUP_CACHE_SIZE, sizeof(uint64_t));
+        if (!s_seen_msg_keys) {
+            IM_LOGE(TAG, "qqbot: dedup ring alloc failed size=%u",
+                    (unsigned)(QQ_DEDUP_CACHE_SIZE * sizeof(uint64_t)));
+            return OPRT_MALLOC_FAILED;
+        }
+    }
+
     if (IM_SECRET_QQ_APP_ID[0] != '\0') {
         im_safe_copy(s_app_id, sizeof(s_app_id), IM_SECRET_QQ_APP_ID);
     }

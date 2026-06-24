@@ -39,4 +39,33 @@ menu "IM Config"
         default 8192
         help
             Stack size in bytes for the IM qqbot token refresh thread (default 8*1024).
+
+    config IM_WX_UPDATES_BUF_SIZE
+        int "Weixin get_updates cursor buffer (bytes)"
+        default 4096
+        help
+            Cursor/state buffer for weixin long-poll. Allocated from PSRAM at
+            weixin_bot_init. Lower on tight-SRAM boards.
+
+    config IM_FS_DEDUP_CACHE_SIZE
+        int "Feishu dedup ring cache entries (count)"
+        default 512
+        help
+            Number of 8-byte FNV hashes kept per dedup ring (one for messages,
+            one for events). 512 = 4 KiB per ring = 8 KiB total. Allocated
+            from PSRAM at feishu_bot_init. Lower on tight-SRAM boards.
+
+    config IM_TG_DEDUP_CACHE_SIZE
+        int "Telegram dedup ring cache entries (count)"
+        default 64
+        help
+            Number of 8-byte FNV hashes kept for telegram message dedup.
+            Allocated from PSRAM at telegram_bot_init.
+
+    config IM_QQ_DEDUP_CACHE_SIZE
+        int "QQ bot dedup ring cache entries (count)"
+        default 64
+        help
+            Number of 8-byte FNV hashes kept for QQ bot message dedup.
+            Allocated from PSRAM at qqbot init.
 endmenu

@@ -24,6 +24,10 @@
 #define CLAW_WS_MAX_CLIENTS   4
 #endif
 
+#ifndef CLAW_WS_CLIENT_RX_BUF_SIZE
+#define CLAW_WS_CLIENT_RX_BUF_SIZE 4096
+#endif
+
 #ifndef CLAW_WS_TOKEN_MAX_LEN
 #define CLAW_WS_TOKEN_MAX_LEN 128
 #endif

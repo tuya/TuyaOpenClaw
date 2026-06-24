@@ -13,6 +13,7 @@
 
 #include "ws_server.h"
 #include "tuya_app_config.h"
+#include "app_base_config.h"
 #include "tool_files.h"
 #include "sys_bus.h"
 #include "cJSON.h"
@@ -38,7 +39,9 @@ typedef struct {
     BOOL_T  active;
     BOOL_T  handshake_done;
     char    chat_id[96];
-    uint8_t rx_buf[4096];
+    /* PSRAM-allocated at first ws_clients_init() and kept across resets.
+     * Previously inline rx_buf[4096] × CLAW_WS_MAX_CLIENTS = 16 KiB .bss. */
+    uint8_t *rx_buf;       /* CLAW_WS_CLIENT_RX_BUF_SIZE bytes */
     size_t  rx_len;
 } ws_client_t;
 
@@ -64,13 +67,30 @@ static void ws_reset_client(ws_client_t *client)
     if (!client) {
         return;
     }
+    /* Keep rx_buf (PSRAM) across resets — wipe payload, drop runtime state. */
+    uint8_t *kept_rx = client->rx_buf;
     memset(client, 0, sizeof(ws_client_t));
-    client->fd = -1;
+    client->rx_buf = kept_rx;
+    client->fd     = -1;
+    if (client->rx_buf) {
+        memset(client->rx_buf, 0, CLAW_WS_CLIENT_RX_BUF_SIZE);
+    }
 }
 
 static void ws_clients_init(void)
 {
     for (int i = 0; i < CLAW_WS_MAX_CLIENTS; i++) {
+        if (!s_clients[i].rx_buf) {
+            /* Lazy one-shot allocation in PSRAM. Was 4 KiB inline × N clients
+             * in .bss; now lives on PSRAM heap and is kept for the lifetime
+             * of the process. */
+            s_clients[i].rx_buf = (uint8_t *)claw_malloc(CLAW_WS_CLIENT_RX_BUF_SIZE);
+            if (!s_clients[i].rx_buf) {
+                PR_ERR("ws_clients_init: rx_buf alloc failed for client %d size=%d",
+                       i, (int)CLAW_WS_CLIENT_RX_BUF_SIZE);
+                /* Continue — connections to this slot will fail later. */
+            }
+        }
         ws_reset_client(&s_clients[i]);
     }
 }
@@ -417,7 +437,7 @@ static OPERATE_RET ws_decode_one_frame(ws_client_t *client,
         off += 8;
     }
 
-    if (plen > (uint64_t)(sizeof(client->rx_buf) - 16)) {
+    if (plen > (uint64_t)(((size_t)CLAW_WS_CLIENT_RX_BUF_SIZE) - 16)) {
         return OPRT_MSG_OUT_OF_LIMIT;
     }
 
@@ -687,14 +707,14 @@ static void ws_server_task(void *arg)
                 continue;
             }
 
-            if (client->rx_len >= sizeof(client->rx_buf)) {
+            if (client->rx_len >= ((size_t)CLAW_WS_CLIENT_RX_BUF_SIZE)) {
                 ws_close_client_locked(client);
                 continue;
             }
 
             int n = tal_net_recv(client->fd,
                                  client->rx_buf + client->rx_len,
-                                 (uint32_t)(sizeof(client->rx_buf) - client->rx_len));
+                                 (uint32_t)(((size_t)CLAW_WS_CLIENT_RX_BUF_SIZE) - client->rx_len));
             if (n == OPRT_RESOURCE_NOT_READY) {
                 continue;
             }
