@@ -97,15 +97,17 @@ typedef struct {
     char           session_key[128];
     uint32_t       req_id_counter;
 
-    uint8_t        rx_buf[ACP_CLIENT_RX_BUF_SIZE];
+    /* PSRAM-allocated at init time. Previously inline arrays totaling ~48 KiB
+     * of internal SRAM .bss — moved out so BIND-stage softAP has heap. */
+    uint8_t       *rx_buf;        /* ACP_CLIENT_RX_BUF_SIZE bytes */
     size_t         rx_len;
 
-    char           ws_msg_buf[ACP_CLIENT_WS_MSG_BUF_SIZE];
+    char          *ws_msg_buf;    /* ACP_CLIENT_WS_MSG_BUF_SIZE bytes */
     size_t         ws_msg_len;
     bool         ws_msg_active;
 
     /* Accumulates streaming chat content until done=true / state=final */
-    char           reply_buf[ACP_CLIENT_REPLY_BUF_SIZE];
+    char          *reply_buf;     /* ACP_CLIENT_REPLY_BUF_SIZE bytes */
     size_t         reply_len;
 
     acp_reply_cb_t reply_cb;
@@ -1002,11 +1004,11 @@ static OPERATE_RET __acp_feed_text_frame(uint8_t opcode,
         if (!payload) {
             return OPRT_INVALID_PARM;
         }
-        if (s_ctx.ws_msg_len + payload_len >= sizeof(s_ctx.ws_msg_buf)) {
+        if (s_ctx.ws_msg_len + payload_len >= ((size_t)ACP_CLIENT_WS_MSG_BUF_SIZE)) {
             PR_WARN("acp ws message too large msg_len=%u frag=%u cap=%u",
                     (unsigned)s_ctx.ws_msg_len,
                     (unsigned)payload_len,
-                    (unsigned)sizeof(s_ctx.ws_msg_buf));
+                    (unsigned)((size_t)ACP_CLIENT_WS_MSG_BUF_SIZE));
             s_ctx.ws_msg_active = FALSE;
             s_ctx.ws_msg_len    = 0;
             return OPRT_BUFFER_NOT_ENOUGH;
@@ -1476,7 +1478,7 @@ static void acp_client_task(void *arg)
             continue;
         }
 
-        if (s_ctx.rx_len >= sizeof(s_ctx.rx_buf)) {
+        if (s_ctx.rx_len >= ((size_t)ACP_CLIENT_RX_BUF_SIZE)) {
             PR_WARN("acp rx buffer full, disconnecting");
             __disconnect();
             continue;
@@ -1484,7 +1486,7 @@ static void acp_client_task(void *arg)
 
         int n = tal_net_recv(s_ctx.fd,
                                s_ctx.rx_buf + s_ctx.rx_len,
-                               (uint32_t)(sizeof(s_ctx.rx_buf) - s_ctx.rx_len));
+                               (uint32_t)(((size_t)ACP_CLIENT_RX_BUF_SIZE) - s_ctx.rx_len));
         if (n == OPRT_RESOURCE_NOT_READY) {
             continue;
         }
@@ -1601,6 +1603,28 @@ OPERATE_RET __acp_client_init_evt_cb(void *data)
         PR_WARN("acp_client: gateway config incomplete (token/device_id/host empty), skip initialization");
         return OPRT_OK;
     }
+
+    /* Allocate the three big I/O buffers in PSRAM (claw_malloc → tal_psram_malloc
+     * when ENABLE_EXT_RAM is on). Together these were ~48 KiB of internal SRAM
+     * .bss in the previous static layout — moving them out frees that SRAM for
+     * the WiFi softAP / BLE controller during the BIND phase. */
+    s_ctx.rx_buf      = (uint8_t *)claw_malloc(ACP_CLIENT_RX_BUF_SIZE);
+    s_ctx.ws_msg_buf  = (char *)   claw_malloc(ACP_CLIENT_WS_MSG_BUF_SIZE);
+    s_ctx.reply_buf   = (char *)   claw_malloc(ACP_CLIENT_REPLY_BUF_SIZE);
+    if (!s_ctx.rx_buf || !s_ctx.ws_msg_buf || !s_ctx.reply_buf) {
+        PR_ERR("acp client buf alloc failed rx=%p ws=%p reply=%p sizes=%d/%d/%d",
+               s_ctx.rx_buf, s_ctx.ws_msg_buf, s_ctx.reply_buf,
+               (int)ACP_CLIENT_RX_BUF_SIZE,
+               (int)ACP_CLIENT_WS_MSG_BUF_SIZE,
+               (int)ACP_CLIENT_REPLY_BUF_SIZE);
+        if (s_ctx.rx_buf)     { claw_free(s_ctx.rx_buf);     s_ctx.rx_buf     = NULL; }
+        if (s_ctx.ws_msg_buf) { claw_free(s_ctx.ws_msg_buf); s_ctx.ws_msg_buf = NULL; }
+        if (s_ctx.reply_buf)  { claw_free(s_ctx.reply_buf);  s_ctx.reply_buf  = NULL; }
+        return OPRT_MALLOC_FAILED;
+    }
+    memset(s_ctx.rx_buf,     0, ACP_CLIENT_RX_BUF_SIZE);
+    memset(s_ctx.ws_msg_buf, 0, ACP_CLIENT_WS_MSG_BUF_SIZE);
+    memset(s_ctx.reply_buf,  0, ACP_CLIENT_REPLY_BUF_SIZE);
 
     OPERATE_RET rt = tal_mutex_create_init(&s_ctx.tx_mutex);
     if (rt != OPRT_OK) {

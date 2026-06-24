@@ -51,7 +51,8 @@ static const char *TAG = "weixin";
 static char          s_bot_token[256]        = {0};
 static char          s_base_host[128]        = {0};
 static char          s_allow_from[96]        = {0};
-static char          s_get_updates_buf[4096] = {0};
+/* PSRAM-allocated at weixin_bot_init. Previously 4 KiB inline .bss. */
+static char         *s_get_updates_buf       = NULL;
 static char          s_context_token[512]    = {0};
 
 static THREAD_HANDLE s_poll_thread           = NULL;
@@ -473,7 +474,7 @@ static void process_updates(cJSON *root)
     /* Update get_updates_buf if server returned a new one */
     cJSON *new_buf = cJSON_GetObjectItem(root, "get_updates_buf");
     if (cJSON_IsString(new_buf) && new_buf->valuestring && new_buf->valuestring[0] != '\0') {
-        im_safe_copy(s_get_updates_buf, sizeof(s_get_updates_buf), new_buf->valuestring);
+        im_safe_copy(s_get_updates_buf, ((size_t)IM_WX_UPDATES_BUF_SIZE), new_buf->valuestring);
         im_kv_set_string(IM_NVS_WX, IM_NVS_KEY_WX_UPD_BUF, s_get_updates_buf);
     }
 
@@ -889,6 +890,16 @@ cleanup:
  */
 OPERATE_RET weixin_bot_init(void)
 {
+    /* PSRAM alloc of long-poll cursor buffer (was 4 KiB inline .bss). */
+    if (!s_get_updates_buf) {
+        s_get_updates_buf = (char *)im_calloc(1, IM_WX_UPDATES_BUF_SIZE);
+        if (!s_get_updates_buf) {
+            IM_LOGE(TAG, "weixin: s_get_updates_buf alloc failed size=%d",
+                    (int)IM_WX_UPDATES_BUF_SIZE);
+            return OPRT_MALLOC_FAILED;
+        }
+    }
+
     /* Load token */
     if (IM_SECRET_WX_TOKEN[0] != '\0') {
         im_safe_copy(s_bot_token, sizeof(s_bot_token), IM_SECRET_WX_TOKEN);
@@ -919,7 +930,7 @@ OPERATE_RET weixin_bot_init(void)
     /* Load get_updates_buf */
     memset(tmp, 0, sizeof(tmp));
     if (im_kv_get_string(IM_NVS_WX, IM_NVS_KEY_WX_UPD_BUF,
-                         s_get_updates_buf, sizeof(s_get_updates_buf)) == OPRT_OK) {
+                         s_get_updates_buf, ((size_t)IM_WX_UPDATES_BUF_SIZE)) == OPRT_OK) {
         IM_LOGI(TAG, "restored get_updates_buf len=%u",
                 (unsigned)strlen(s_get_updates_buf));
     }
@@ -1063,7 +1074,7 @@ OPERATE_RET weixin_set_token(const char *token)
         return OPRT_INVALID_PARM;
     }
     im_safe_copy(s_bot_token, sizeof(s_bot_token), token);
-    memset(s_get_updates_buf, 0, sizeof(s_get_updates_buf));
+    memset(s_get_updates_buf, 0, ((size_t)IM_WX_UPDATES_BUF_SIZE));
     memset(s_context_token,   0, sizeof(s_context_token));
     (void)im_kv_del(IM_NVS_WX, IM_NVS_KEY_WX_UPD_BUF);
     (void)im_kv_del(IM_NVS_WX, IM_NVS_KEY_WX_CTX_TOK);

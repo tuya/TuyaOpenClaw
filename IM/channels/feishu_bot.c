@@ -39,7 +39,12 @@ static THREAD_HANDLE s_ws_thread         = NULL;
 #define FS_WS_FRAME_MAX_HEADERS    32
 #define FS_WS_FRAME_MAX_KEY        64
 #define FS_WS_FRAME_MAX_VALUE      256
+/* Kconfig override; was a hard-coded 512 (= 4 KiB × 2 rings = 8 KiB .bss). */
+#if defined(IM_FS_DEDUP_CACHE_SIZE)
+#define FS_DEDUP_CACHE_SIZE        IM_FS_DEDUP_CACHE_SIZE
+#else
 #define FS_DEDUP_CACHE_SIZE        512
+#endif
 #define FS_MAX_FRAG_PARTS          8
 #ifndef IM_FS_POLL_STACK
 #define IM_FS_POLL_STACK (16 * 1024)
@@ -161,8 +166,10 @@ static void append_sender_id(char *sender_ids, size_t sender_ids_size, const cha
 /* -------- dedup ring buffer -------- */
 
 typedef struct {
-    uint64_t keys[FS_DEDUP_CACHE_SIZE];
-    size_t   idx;
+    /* PSRAM-allocated at feishu_bot_init. Inline [FS_DEDUP_CACHE_SIZE] was
+     * ~4 KiB internal SRAM .bss per ring (× 2 rings = ~8 KiB). */
+    uint64_t *keys;
+    size_t    idx;
 } dedup_ring_t;
 
 static dedup_ring_t s_seen_msg   = {0};
@@ -170,6 +177,9 @@ static dedup_ring_t s_seen_event = {0};
 
 static bool dedup_contains(const dedup_ring_t *ring, uint64_t key)
 {
+    if (!ring->keys) {
+        return false;
+    }
     for (size_t i = 0; i < FS_DEDUP_CACHE_SIZE; i++) {
         if (ring->keys[i] == key) {
             return true;
@@ -180,8 +190,24 @@ static bool dedup_contains(const dedup_ring_t *ring, uint64_t key)
 
 static void dedup_insert(dedup_ring_t *ring, uint64_t key)
 {
+    if (!ring->keys) {
+        return;
+    }
     ring->keys[ring->idx] = key;
     ring->idx             = (ring->idx + 1) % FS_DEDUP_CACHE_SIZE;
+}
+
+static OPERATE_RET dedup_ring_ensure(dedup_ring_t *ring)
+{
+    if (ring->keys) {
+        return OPRT_OK;
+    }
+    ring->keys = (uint64_t *)im_calloc(FS_DEDUP_CACHE_SIZE, sizeof(uint64_t));
+    if (!ring->keys) {
+        return OPRT_MALLOC_FAILED;
+    }
+    ring->idx = 0;
+    return OPRT_OK;
 }
 
 /* -------- TLS + HTTP -------- */
@@ -2613,6 +2639,14 @@ static void feishu_ws_task(void *arg)
 
 OPERATE_RET feishu_bot_init(void)
 {
+    /* Alloc dedup rings in PSRAM (was ~8 KiB internal SRAM .bss). */
+    if (dedup_ring_ensure(&s_seen_msg) != OPRT_OK ||
+        dedup_ring_ensure(&s_seen_event) != OPRT_OK) {
+        IM_LOGE(TAG, "feishu: dedup ring alloc failed (need %u bytes ×2)",
+                (unsigned)(FS_DEDUP_CACHE_SIZE * sizeof(uint64_t)));
+        return OPRT_MALLOC_FAILED;
+    }
+
     if (IM_SECRET_FS_APP_ID[0] != '\0') {
         im_safe_copy(s_app_id, sizeof(s_app_id), IM_SECRET_FS_APP_ID);
     }

@@ -10,4 +10,39 @@ menu "Gateway (WebSocket) Config"
         default 10240
         help
             Stack size in bytes for the ACP client thread (default 10*1024).
+
+    config ACP_CLIENT_RX_BUF_SIZE
+        int "ACP client RX scratch buffer (bytes)"
+        default 8192
+        help
+            Raw socket RX buffer for the ACP gateway WebSocket client.
+            Allocated from PSRAM at acp_client init; default 8 KiB.
+            Tighten on internal-SRAM-constrained boards (e.g. ESP32-S3).
+
+    config ACP_CLIENT_WS_MSG_BUF_SIZE
+        int "ACP client WebSocket message reassembly buffer (bytes)"
+        default 32768
+        help
+            Reassembles a single WebSocket text frame from the ACP gateway.
+            Was the dominant .bss consumer (32 KiB) on this app prior to
+            being moved to PSRAM. Lower on tight-SRAM boards.
+
+    config ACP_CLIENT_REPLY_BUF_SIZE
+        int "ACP client streaming reply accumulation buffer (bytes)"
+        default 8192
+        help
+            Accumulates streaming chat reply chunks until final.
+            Allocated from PSRAM at acp_client init.
+
+    config CLAW_WS_MAX_CLIENTS
+        int "WebSocket server max concurrent clients"
+        default 4
+        help
+            Max simultaneous WS client connections served by claw_ws.
+
+    config CLAW_WS_CLIENT_RX_BUF_SIZE
+        int "WebSocket server per-client RX buffer (bytes)"
+        default 4096
+        help
+            Per-client framing buffer. Allocated from PSRAM at ws_server_start.
 endmenu

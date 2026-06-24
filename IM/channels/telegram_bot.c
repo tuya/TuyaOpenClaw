@@ -27,12 +27,18 @@ static bool          s_tg_tls_no_verify    = false;
 #define TG_PROXY_READ_TOTAL_MS      ((IM_TG_POLL_TIMEOUT_S + 20) * 1000)
 #define TG_PROXY_LONGPOLL_TIMEOUT_S 20
 #define TG_OFFSET_NVS_KEY           "update_offset"
+/* Kconfig override; default 64 entries = 512 B per ring. */
+#if defined(IM_TG_DEDUP_CACHE_SIZE)
+#define TG_DEDUP_CACHE_SIZE         IM_TG_DEDUP_CACHE_SIZE
+#else
 #define TG_DEDUP_CACHE_SIZE         64
+#endif
 #define TG_OFFSET_SAVE_INTERVAL_MS  (5 * 1000)
 #define TG_OFFSET_SAVE_STEP         10
 
-static uint64_t s_seen_msg_keys[TG_DEDUP_CACHE_SIZE] = {0};
-static size_t   s_seen_msg_idx                       = 0;
+/* PSRAM-allocated at telegram_bot_init (was inline .bss). */
+static uint64_t *s_seen_msg_keys = NULL;
+static size_t    s_seen_msg_idx  = 0;
 
 static uint64_t make_msg_key(const char *chat_id, int msg_id)
 {
@@ -42,6 +48,9 @@ static uint64_t make_msg_key(const char *chat_id, int msg_id)
 
 static bool seen_msg_contains(uint64_t key)
 {
+    if (!s_seen_msg_keys) {
+        return false;
+    }
     for (size_t i = 0; i < TG_DEDUP_CACHE_SIZE; i++) {
         if (s_seen_msg_keys[i] == key) {
             return true;
@@ -52,6 +61,9 @@ static bool seen_msg_contains(uint64_t key)
 
 static void seen_msg_insert(uint64_t key)
 {
+    if (!s_seen_msg_keys) {
+        return;
+    }
     s_seen_msg_keys[s_seen_msg_idx] = key;
     s_seen_msg_idx                  = (s_seen_msg_idx + 1) % TG_DEDUP_CACHE_SIZE;
 }
@@ -474,6 +486,16 @@ static void telegram_poll_task(void *arg)
 
 OPERATE_RET telegram_bot_init(void)
 {
+    /* PSRAM-allocate dedup ring (was inline .bss). */
+    if (!s_seen_msg_keys) {
+        s_seen_msg_keys = (uint64_t *)im_calloc(TG_DEDUP_CACHE_SIZE, sizeof(uint64_t));
+        if (!s_seen_msg_keys) {
+            IM_LOGE(TAG, "telegram: dedup ring alloc failed size=%u",
+                    (unsigned)(TG_DEDUP_CACHE_SIZE * sizeof(uint64_t)));
+            return OPRT_MALLOC_FAILED;
+        }
+    }
+
     if (IM_SECRET_TG_TOKEN[0] != '\0') {
         im_safe_copy(s_bot_token, sizeof(s_bot_token), IM_SECRET_TG_TOKEN);
     }
