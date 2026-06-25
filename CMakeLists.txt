@@ -87,11 +87,15 @@ endif()
 # DuckyClaw ai_components overlay
 ########################################
 # Surgically replace individual translation units inside the upstream
-# TuyaOpen ai_components library targets (ai_mcp, ai_agent, ai_main) with
+# TuyaOpen ai_components library targets (ai_mcp, ai_agent) with
 # DuckyClaw-side patches kept under overlay/. The SDK submodule stays
 # pristine; only this app's CMake graph diverges. TuyaOpen processes
 # src/ai_components/ before this file is `include`d, so the upstream targets
 # already exist when we reach here.
+#
+# Note: ai_main and ai_audio used to be overlayed too, but those diffs have
+# been folded back into upstream / proven trivial — DuckyClaw now consumes
+# them straight from TuyaOpen/src/ai_components/ai_{main,audio}/.
 set(_DC_OVERLAY ${APP_PATH}/overlay/ai_components)
 
 function(_dc_overlay_source target rel_path)
@@ -124,25 +128,22 @@ function(_dc_overlay_source target rel_path)
     endif()
 endfunction()
 
-# ai_mcp: header (BEFORE PUBLIC on the lib + BEFORE PRIVATE on EXAMPLE_LIB)
-# The lib-level prepend covers ai_mcp's own .c files and anything that does
-# target_link_libraries(... ai_mcp). But EXAMPLE_LIB (tuyaapp) gets its
+# Header overlays (BEFORE PUBLIC on the lib + BEFORE PRIVATE on EXAMPLE_LIB)
+# The lib-level prepend covers the lib's own .c files and anything that does
+# target_link_libraries(... <lib>). But EXAMPLE_LIB (tuyaapp) gets its
 # include paths from the COMPONENT_PUBINC variable that was snapshotted in
-# ai_mcp's own CMakeLists BEFORE our overlay ran, so EXAMPLE_LIB also needs
-# the overlay path explicitly — otherwise agent_loop.c (which lives in
-# DuckyClaw/agent/ and compiles into EXAMPLE_LIB) keeps seeing the upstream
-# ai_mcp_server.h without the tool_exec_hook declarations.
-if(TARGET ai_mcp)
-    target_include_directories(ai_mcp BEFORE PUBLIC ${_DC_OVERLAY}/ai_mcp/include)
-    message(STATUS "[DC overlay] ai_mcp include path prepended: ${_DC_OVERLAY}/ai_mcp/include")
-endif()
-target_include_directories(${EXAMPLE_LIB} BEFORE PRIVATE ${_DC_OVERLAY}/ai_mcp/include)
-message(STATUS "[DC overlay] ${EXAMPLE_LIB} include path prepended: ${_DC_OVERLAY}/ai_mcp/include")
+# the lib's own CMakeLists BEFORE our overlay ran, so EXAMPLE_LIB also needs
+# the overlay path explicitly — otherwise app sources that compile into
+# EXAMPLE_LIB (agent_loop.c, ducky_claw_chat.c, app_im.c, …) keep seeing the
+# upstream headers without DuckyClaw's added declarations.
+foreach(_lib_hdir ai_mcp ai_agent)
+    if(TARGET ${_lib_hdir})
+        target_include_directories(${_lib_hdir} BEFORE PUBLIC ${_DC_OVERLAY}/${_lib_hdir}/include)
+        message(STATUS "[DC overlay] ${_lib_hdir} include path prepended: ${_DC_OVERLAY}/${_lib_hdir}/include")
+    endif()
+    target_include_directories(${EXAMPLE_LIB} BEFORE PRIVATE ${_DC_OVERLAY}/${_lib_hdir}/include)
+    message(STATUS "[DC overlay] ${EXAMPLE_LIB} include path prepended: ${_DC_OVERLAY}/${_lib_hdir}/include")
+endforeach()
 
 _dc_overlay_source(ai_mcp   ai_mcp/src/ai_mcp_server.c)
 _dc_overlay_source(ai_agent ai_agent/src/ai_agent.c)
-_dc_overlay_source(ai_main  ai_main/src/ai_chat_main.c)
-# ai_audio: keep mic capture ringbuf + record_task in internal SRAM even when
-# ENABLE_EXT_RAM=1 (PSRAM access latency breaks AFE WebRTC VAD timing on the
-# ESP32S3 BREAD_COMPACT_WIFI raw-I2S mic path).
-_dc_overlay_source(ai_audio ai_audio/src/ai_audio_input.c)
