@@ -1,6 +1,6 @@
 /**
  * @file lua_runtime.c
- * @brief Embedded Lua 5.5 runtime for the DuckyClaw lua_run_script tool.
+ * @brief Embedded Lua 5.5 runtime for the TuyaOpenClaw lua_run_script tool.
  *
  * Per-call lifecycle:
  *   1. lua_newstate with a claw_malloc-backed allocator (PSRAM-aware via

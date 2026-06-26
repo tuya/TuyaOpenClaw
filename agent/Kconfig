@@ -1,17 +1,17 @@
-menu "DuckyClaw Agent Config"
-    config DUCKY_CLAW_AGENT_STACK
+menu "TuyaOpenClaw Agent Config"
+    config TUYAOPEN_CLAW_AGENT_STACK
         int "Agent loop thread stack size (bytes)"
         default 24576
         help
             Stack size in bytes for the agent loop thread (default 24*1024).
 
-    config DUCKY_CLAW_CONTEXT_BUF_SIZE
+    config TUYAOPEN_CLAW_CONTEXT_BUF_SIZE
         int "Agent context buffer size (bytes)"
         default 32768
         help
             Size in bytes for the context/prompt buffer (default 32*1024).
 
-    config DUCKY_CLAW_HISTORY_MAX_COUNT
+    config TUYAOPEN_CLAW_HISTORY_MAX_COUNT
         int "Max history message count"
         default 10
         help

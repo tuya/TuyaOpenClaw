@@ -1,4 +1,4 @@
-name: DuckyClaw Check Build
+name: TuyaOpenClaw Check Build
 run-name: ${{ github.actor }} triggered build check
 on:
   push:

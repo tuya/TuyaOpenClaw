@@ -1,6 +1,6 @@
 /**
  * @file skill_loader.c
- * @brief Skill loader implementation for DuckyClaw
+ * @brief Skill loader implementation for TuyaOpenClaw
  *
  * Ported from TuyaOpen/apps/mimiclaw/skills/skill_loader.c.
  * Key adaptations:
@@ -72,7 +72,7 @@
 #define BUILTIN_SKILL_CREATOR                                                \
     "# Skill Creator\n"                                                      \
     "\n"                                                                     \
-    "Create new skills for DuckyClaw.\n"                                     \
+    "Create new skills for TuyaOpenClaw.\n"                                  \
     "\n"                                                                     \
     "## When to use\n"                                                       \
     "When the user asks to create a new skill, teach the bot "               \

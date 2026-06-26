@@ -1,6 +1,6 @@
 /**
  * @file cli_cmd.c
- * @brief Unified CLI implementation for DuckyClaw (config commands only)
+ * @brief Unified CLI implementation for TuyaOpenClaw (config commands only)
  * @version 0.1
  * @date 2026-04-08
  * @copyright Copyright (c) Tuya Inc. All Rights Reserved.
@@ -401,7 +401,7 @@ static void cmd_help(int argc, char *argv[])
     (void)argc;
     (void)argv;
 
-    tal_cli_echo("=== DuckyClaw CLI (config) ===");
+    tal_cli_echo("=== TuyaOpenClaw CLI (config) ===");
     tal_cli_echo("");
     tal_cli_echo("[Config]");
     cli_echof_("  %-28s %s", "cfg_show", "Show effective config (KV > build)");
@@ -412,7 +412,7 @@ static void cmd_help(int argc, char *argv[])
     cli_echof_("  %-28s %s", "cfg_set_gw_host <host>", "Set OpenClaw gateway host");
     cli_echof_("  %-28s %s", "cfg_set_gw_port <port>", "Set OpenClaw gateway port");
     cli_echof_("  %-28s %s", "cfg_set_gw_token <token>", "Set OpenClaw gateway token");
-    cli_echof_("  %-28s %s", "cfg_set_device_id <id>", "Set DuckyClaw device ID");
+    cli_echof_("  %-28s %s", "cfg_set_device_id <id>", "Set TuyaOpenClaw device ID");
     cli_echof_("  %-28s %s", "cfg_set_channel_mode <mode>", "Set IM channel mode (telegram|discord|feishu|weixin|qqbot|OFF)");
     cli_echof_("  %-28s %s", "cfg_set_tg_token <token>", "Set Telegram token");
     cli_echof_("  %-28s %s", "cfg_set_dc_token <token>", "Set Discord token");
@@ -477,7 +477,7 @@ static void cmd_cfg_show(int argc, char *argv[])
     snprintf(port_text, sizeof(port_text), "%u", (unsigned)OPENCLAW_GATEWAY_PORT);
     cli_print_app_cfg_item_("gw_port", APP_KV_GW_PORT, port_text, false);
     cli_print_app_cfg_item_("gw_token", APP_KV_GW_TOKEN, OPENCLAW_GATEWAY_TOKEN, true);
-    cli_print_app_cfg_item_("device_id", APP_KV_DEVICE_ID, DUCKYCLAW_DEVICE_ID, true);
+    cli_print_app_cfg_item_("device_id", APP_KV_DEVICE_ID, TUYAOPENCLAW_DEVICE_ID, true);
 
     tal_cli_echo("[IM]");
     cli_print_im_cfg_item_("channel_mode", IM_NVS_BOT, IM_NVS_KEY_CHANNEL_MODE, IM_SECRET_CHANNEL_MODE, false);

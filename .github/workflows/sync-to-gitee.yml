@@ -5,7 +5,7 @@ on:
 
 jobs:
   sync:
-    if: github.repository == 'tuya/DuckyClaw'
+    if: github.repository == 'tuya/TuyaOpenClaw'
     runs-on: ubuntu-latest
     name: Git Repo Sync
     steps:
@@ -14,6 +14,6 @@ jobs:
         fetch-depth: 0
     - uses: tuya/TuyaOpen@master
       with:
-        target-url: 'https://gitee.com/tuya-open/DuckyClaw.git'
+        target-url: 'https://gitee.com/tuya-open/TuyaOpenClaw.git'
         target-username: 'flyingcys'
         target-token: ${{ secrets.GITEE_TOKEN }}

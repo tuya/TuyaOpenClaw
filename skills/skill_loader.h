@@ -1,6 +1,6 @@
 /**
  * @file skill_loader.h
- * @brief Skill loader for DuckyClaw
+ * @brief Skill loader for TuyaOpenClaw
  *
  * Manages skill files (.md) on the filesystem. Built-in skills are
  * installed on first boot; users / the AI can create custom skills

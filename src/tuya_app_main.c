@@ -47,7 +47,7 @@
 #include "ble_mgr.h"
 #endif
 
-#include "ducky_claw_chat.h"
+#include "tuyaopen_claw_chat.h"
 #include "reset_netcfg.h"
 #include "app_im.h"
 #include "sys_bus.h"
@@ -390,9 +390,9 @@ void user_main(void)
         PR_ERR("sys_bus_init failed rt:%d", ret);
     }
 
-    ret = ducky_claw_chat_init();
+    ret = tuyaopen_claw_chat_init();
     if (ret != OPRT_OK) {
-        PR_ERR("ducky_claw_chat_init failed rt:%d", ret);
+        PR_ERR("tuyaopen_claw_chat_init failed rt:%d", ret);
     }
 
     ret = app_im_init();

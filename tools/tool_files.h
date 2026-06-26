@@ -1,6 +1,6 @@
 /**
  * @file tool_files.h
- * @brief MCP file operation tools for DuckyClaw
+ * @brief MCP file operation tools for TuyaOpenClaw
  * @version 0.2
  * @date 2025-03-25
  *

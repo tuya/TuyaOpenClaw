@@ -1,6 +1,6 @@
 /**
  * @file app_base_config.h
- * @brief Base configuration macros and helpers for DuckyClaw.
+ * @brief Base configuration macros and helpers for TuyaOpenClaw.
  *
  * Consolidates:
  *   - Filesystem type selection, root paths, and claw_f* / claw_fs_* macros
@@ -219,7 +219,7 @@ static inline void app_cfg_get_gw_token(char *out, size_t out_size)
 
 static inline void app_cfg_get_device_id(char *out, size_t out_size)
 {
-    app_kv_get_string(APP_KV_DEVICE_ID, DUCKYCLAW_DEVICE_ID, out, out_size);
+    app_kv_get_string(APP_KV_DEVICE_ID, TUYAOPENCLAW_DEVICE_ID, out, out_size);
 }
 
 #ifdef __cplusplus

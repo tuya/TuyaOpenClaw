@@ -40,16 +40,16 @@
 /***********************************************************
 ************************macro define************************
 ***********************************************************/
-#ifndef DUCKY_CLAW_AGENT_STACK
-#define DUCKY_CLAW_AGENT_STACK   (24*1024)
+#ifndef TUYAOPEN_CLAW_AGENT_STACK
+#define TUYAOPEN_CLAW_AGENT_STACK   (24*1024)
 #endif
 
-#ifndef DUCKY_CLAW_CONTEXT_BUF_SIZE
-#define DUCKY_CLAW_CONTEXT_BUF_SIZE   (32 * 1024)
+#ifndef TUYAOPEN_CLAW_CONTEXT_BUF_SIZE
+#define TUYAOPEN_CLAW_CONTEXT_BUF_SIZE   (32 * 1024)
 #endif
 
-#ifndef DUCKY_CLAW_HISTORY_MAX_COUNT
-#define DUCKY_CLAW_HISTORY_MAX_COUNT  10
+#ifndef TUYAOPEN_CLAW_HISTORY_MAX_COUNT
+#define TUYAOPEN_CLAW_HISTORY_MAX_COUNT  10
 #endif
 
 /* Maximum inner-loop iterations per user turn (mirrors MIMI_AGENT_MAX_TOOL_ITER) */
@@ -66,7 +66,7 @@
 #define TOOL_RESULT_BUF_SIZE  (512)
 
 /* Buffer holding the last complete AI text stream, set by
- * agent_loop_set_last_response() called from ducky_claw_chat.c on STREAM_STOP.
+ * agent_loop_set_last_response() called from tuyaopen_claw_chat.c on STREAM_STOP.
  * The inner loop forwards it to IM when no tool was called. */
 #define LAST_RESPONSE_MAX  (16 * 1024)
 /***********************************************************
@@ -110,7 +110,7 @@ static char        *s_last_response      = NULL;
 static MUTEX_HANDLE s_last_response_lock = NULL;
 
 /* True while the inner loop is active (i.e. we are in a tool-use iteration).
- * ducky_claw_chat.c uses this to suppress mid-stream overflow flushes. */
+ * tuyaopen_claw_chat.c uses this to suppress mid-stream overflow flushes. */
 static volatile bool s_in_tool_loop = false;
 
 /***********************************************************
@@ -241,7 +241,7 @@ OPERATE_RET build_current_context(const char *role, const char *content)
     }
 
     int count = cJSON_GetArraySize(s_history_json);
-    if (count >= DUCKY_CLAW_HISTORY_MAX_COUNT) {
+    if (count >= TUYAOPEN_CLAW_HISTORY_MAX_COUNT) {
         cJSON_DeleteItemFromArray(s_history_json, 0);
     }
 
@@ -256,7 +256,7 @@ OPERATE_RET build_current_context(const char *role, const char *content)
 /**
  * agent_loop_in_tool_loop - Returns true while the inner tool loop is active.
  *
- * Used by ducky_claw_chat.c to suppress intermediate IM flushes.
+ * Used by tuyaopen_claw_chat.c to suppress intermediate IM flushes.
  */
 bool agent_loop_in_tool_loop(void)
 {
@@ -266,7 +266,7 @@ bool agent_loop_in_tool_loop(void)
 /**
  * agent_loop_set_last_response - Store the completed AI text stream.
  *
- * Called by ducky_claw_chat.c on AI_USER_EVT_TEXT_STREAM_STOP before
+ * Called by tuyaopen_claw_chat.c on AI_USER_EVT_TEXT_STREAM_STOP before
  * calling agent_loop_notify_turn_done().  The inner loop reads this to
  * forward the final response to IM.
  */
@@ -282,7 +282,7 @@ void agent_loop_set_last_response(const char *text)
 }
 
 /**
- * agent_loop_notify_turn_done - Called by ducky_claw_chat.c on STREAM_STOP.
+ * agent_loop_notify_turn_done - Called by tuyaopen_claw_chat.c on STREAM_STOP.
  *
  * Posts the semaphore so the blocked inner loop can proceed to the next
  * iteration check.
@@ -307,11 +307,11 @@ void agent_loop_notify_turn_done(void)
  */
 static void __build_and_send(const char *content, bool is_tool, bool summarize)
 {
-    memset(s_total_prompt, 0, DUCKY_CLAW_CONTEXT_BUF_SIZE);
+    memset(s_total_prompt, 0, TUYAOPEN_CLAW_CONTEXT_BUF_SIZE);
     size_t off = 0;
     if (!is_tool) {
         /* First iteration: include full system prompt (tools, rules, memory, skills) */
-        off = context_build_system_prompt(s_total_prompt, DUCKY_CLAW_CONTEXT_BUF_SIZE);
+        off = context_build_system_prompt(s_total_prompt, TUYAOPEN_CLAW_CONTEXT_BUF_SIZE);
         if (off == 0) {
             PR_ERR("context_build_system_prompt failed");
             return;
@@ -322,14 +322,14 @@ static void __build_and_send(const char *content, bool is_tool, bool summarize)
     tal_mutex_lock(s_history_mutex);
     int count = cJSON_GetArraySize(s_history_json);
     if (count > 0) {
-        off += snprintf(s_total_prompt + off, DUCKY_CLAW_CONTEXT_BUF_SIZE - off,
+        off += snprintf(s_total_prompt + off, TUYAOPEN_CLAW_CONTEXT_BUF_SIZE - off,
                         "\r\n\n# Recent Memory History\r\n");
         for (int j = 0; j < count; j++) {
             cJSON      *e    = cJSON_GetArrayItem(s_history_json, j);
             const char *role = __json_get_string(cJSON_GetObjectItem(e, "role"));
             const char *text = __json_get_string(cJSON_GetObjectItem(e, "content"));
             if (role && text) {
-                off += snprintf(s_total_prompt + off, DUCKY_CLAW_CONTEXT_BUF_SIZE - off,
+                off += snprintf(s_total_prompt + off, TUYAOPEN_CLAW_CONTEXT_BUF_SIZE - off,
                                 "\n- %s: %s", role, text);
             }
         }
@@ -359,11 +359,11 @@ static void __build_and_send(const char *content, bool is_tool, bool summarize)
     }
 
     size_t needed = strlen(content) + strlen(header) + 1;
-    if (off + needed > DUCKY_CLAW_CONTEXT_BUF_SIZE) {
+    if (off + needed > TUYAOPEN_CLAW_CONTEXT_BUF_SIZE) {
         PR_ERR("Prompt buffer overflow");
         return;
     }
-    off += snprintf(s_total_prompt + off, DUCKY_CLAW_CONTEXT_BUF_SIZE - off,
+    off += snprintf(s_total_prompt + off, TUYAOPEN_CLAW_CONTEXT_BUF_SIZE - off,
                     "%s%s", header, content);
 
     // PR_NOTICE("Sending prompt (len=%u, is_tool=%d): %s ...", (unsigned)off, is_tool, s_total_prompt);
@@ -426,7 +426,7 @@ static void agent_loop_task(void *arg)
             /* Notify the user via IM that the agent is still working.
              * Sent at the start of every iteration so the user sees progress
              * even when tool calls take a long time. */
-            app_im_bot_send_message("DuckyClaw is working...");
+            app_im_bot_send_message("TuyaOpenClaw is working...");
 
             /* Reset per-round tool state */
             if (s_turn.lock) {
@@ -523,14 +523,14 @@ OPERATE_RET agent_loop_init_evt_cb(void *data)
     }
 
 #if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)
-    s_total_prompt = tal_psram_malloc(DUCKY_CLAW_CONTEXT_BUF_SIZE);
+    s_total_prompt = tal_psram_malloc(TUYAOPEN_CLAW_CONTEXT_BUF_SIZE);
 #else
-    s_total_prompt = tal_malloc(DUCKY_CLAW_CONTEXT_BUF_SIZE);
+    s_total_prompt = tal_malloc(TUYAOPEN_CLAW_CONTEXT_BUF_SIZE);
 #endif
     if (!s_total_prompt) {
         return OPRT_MALLOC_FAILED;
     }
-    memset(s_total_prompt, 0, DUCKY_CLAW_CONTEXT_BUF_SIZE);
+    memset(s_total_prompt, 0, TUYAOPEN_CLAW_CONTEXT_BUF_SIZE);
 
     s_history_json = cJSON_CreateArray();
     if (!s_history_json) {
@@ -559,7 +559,7 @@ OPERATE_RET agent_loop_init_evt_cb(void *data)
     PR_DEBUG("Agent loop initialized");
 
     THREAD_CFG_T thrd_param = {0};
-    thrd_param.stackDepth = DUCKY_CLAW_AGENT_STACK;
+    thrd_param.stackDepth = TUYAOPEN_CLAW_AGENT_STACK;
     thrd_param.priority   = THREAD_PRIO_1;
     thrd_param.thrdname   = "agent_loop";
 #if defined(ENABLE_EXT_RAM) && (ENABLE_EXT_RAM == 1)

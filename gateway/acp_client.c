@@ -523,7 +523,7 @@ static OPERATE_RET __acp_connect(int fd, char *session_key, size_t sk_size)
     cJSON_AddStringToObject(client, "mode",         "ui");
     cJSON_AddStringToObject(client, "version",      "1.0.0");
     cJSON_AddStringToObject(client, "platform",     "embedded");
-    cJSON_AddStringToObject(client, "deviceFamily", "DuckyClaw");
+    cJSON_AddStringToObject(client, "deviceFamily", "TuyaOpenClaw");
     cJSON_AddStringToObject(client, "displayName",  s_device_id);
     cJSON_AddItemToObject(params, "client", client);
 

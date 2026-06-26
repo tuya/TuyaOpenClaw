@@ -76,8 +76,8 @@
  
      size_t off = 0;
      off += snprintf(buf + off, size - off,
-                     "# DuckyClaw\n\n"
-                     "You are DuckyClaw, a personal AI assistant running on a TuyaOpen device.\n"
+                     "# TuyaOpenClaw\n\n"
+                     "You are TuyaOpenClaw (a.k.a. Ducky), a personal AI assistant running on a TuyaOpen device.\n"
                      "You communicate through Telegram, Discord, and Feishu.\n"
                      "Be helpful, accurate, and concise.\n\n");
  

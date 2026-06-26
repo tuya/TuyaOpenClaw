@@ -1,6 +1,6 @@
 /**
  * @file memory_manager.c
- * @brief Long-term memory and daily notes manager for DuckyClaw
+ * @brief Long-term memory and daily notes manager for TuyaOpenClaw
  * @version 0.1
  * @date 2026-03-04
  *

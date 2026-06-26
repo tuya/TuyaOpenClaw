@@ -1,6 +1,6 @@
 /**
  * @file lua_runtime.h
- * @brief Embedded Lua 5.5 runtime entry point for DuckyClaw.
+ * @brief Embedded Lua 5.5 runtime entry point for TuyaOpenClaw.
  *
  * Exposes a single synchronous function that creates a fresh sandboxed
  * lua_State, executes an inline source string, captures print() output

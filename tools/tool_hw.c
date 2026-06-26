@@ -1,6 +1,6 @@
 /**
  * @file tool_hw.c
- * @brief MCP hardware peripheral tools for DuckyClaw (T5 platform)
+ * @brief MCP hardware peripheral tools for TuyaOpenClaw (T5 platform)
  * @version 0.2
  * @date 2026-03-31
  *
