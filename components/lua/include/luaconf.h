@@ -759,7 +759,7 @@
 ** space and to reserve some numbers for pseudo-indices.
 ** (It must fit into max(int)/2.)
 */
-/* DuckyClaw: keep this conservative; was CONFIG_LUA_MAXSTACK on ESP-IDF. */
+/* TuyaOpenClaw: keep this conservative; was CONFIG_LUA_MAXSTACK on ESP-IDF. */
 #if !defined(LUAI_MAXSTACK)
 #if 1000000 < (INT_MAX / 2)
 #define LUAI_MAXSTACK		15000

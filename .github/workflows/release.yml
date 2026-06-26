@@ -1,4 +1,4 @@
-name: DuckyClaw Release
+name: TuyaOpenClaw Release
 run-name: Release ${{ github.ref_name }}
 
 on:
@@ -10,11 +10,11 @@ permissions:
   contents: write
 
 env:
-  GITEE_REPO: tuya-open/DuckyClaw
+  GITEE_REPO: tuya-open/TuyaOpenClaw
 
 jobs:
   sync-gitee:
-    if: github.repository == 'tuya/DuckyClaw'
+    if: github.repository == 'tuya/TuyaOpenClaw'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout GitHub code
@@ -126,7 +126,7 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   gitee-release:
-    if: github.repository == 'tuya/DuckyClaw'
+    if: github.repository == 'tuya/TuyaOpenClaw'
     runs-on: ubuntu-latest
     needs:
       - sync-gitee
@@ -174,7 +174,7 @@ jobs:
               "tag_name": os.environ["TAG_NAME"],
               "target_commitish": os.environ["TARGET_COMMITISH"],
               "name": "Release " + os.environ["TAG_NAME"],
-              "body": "See release notes at https://github.com/tuya/DuckyClaw/releases/tag/" + os.environ["TAG_NAME"],
+              "body": "See release notes at https://github.com/tuya/TuyaOpenClaw/releases/tag/" + os.environ["TAG_NAME"],
               "draft": False,
               "prerelease": False,
           }))'

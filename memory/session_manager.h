@@ -1,6 +1,6 @@
 /**
  * @file session_manager.h
- * @brief Multi-session conversation history manager for DuckyClaw
+ * @brief Multi-session conversation history manager for TuyaOpenClaw
  * @version 0.1
  * @date 2026-03-04
  *

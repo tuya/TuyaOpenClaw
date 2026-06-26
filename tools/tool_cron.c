@@ -1,6 +1,6 @@
 /**
  * @file tool_cron.c
- * @brief MCP cron (scheduled task) tools for DuckyClaw
+ * @brief MCP cron (scheduled task) tools for TuyaOpenClaw
  * @version 0.1
  * @date 2025-03-25
  *

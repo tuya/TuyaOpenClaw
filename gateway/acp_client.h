@@ -1,6 +1,6 @@
 /**
  * @file acp_client.h
- * @brief ACP (Agent Client Protocol) WebSocket client for DuckyClaw.
+ * @brief ACP (Agent Client Protocol) WebSocket client for TuyaOpenClaw.
  *
  * @version 2.0
  * @date 2026-03-19
@@ -62,7 +62,7 @@ void acp_client_set_reply_cb(acp_reply_cb_t cb, void *user_data);
  * @brief Initialise the ACP client and start the background task.
  *
  * Reads connection parameters from OPENCLAW_GATEWAY_HOST, OPENCLAW_GATEWAY_PORT,
- * OPENCLAW_GATEWAY_TOKEN, and DUCKYCLAW_DEVICE_ID (all defined in tuya_app_config.h).
+ * OPENCLAW_GATEWAY_TOKEN, and TUYAOPENCLAW_DEVICE_ID (all defined in tuya_app_config.h).
  * The background task handles connection, reconnection, and frame I/O.
  *
  * @return OPRT_OK on success, error code on failure.

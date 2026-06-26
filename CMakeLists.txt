@@ -84,17 +84,17 @@ if(_APP_NEW_LIBS)
 endif()
 
 ########################################
-# DuckyClaw ai_components overlay
+# TuyaOpenClaw ai_components overlay
 ########################################
 # Surgically replace individual translation units inside the upstream
 # TuyaOpen ai_components library targets (ai_mcp, ai_agent) with
-# DuckyClaw-side patches kept under overlay/. The SDK submodule stays
+# TuyaOpenClaw-side patches kept under overlay/. The SDK submodule stays
 # pristine; only this app's CMake graph diverges. TuyaOpen processes
 # src/ai_components/ before this file is `include`d, so the upstream targets
 # already exist when we reach here.
 #
 # Note: ai_main and ai_audio used to be overlayed too, but those diffs have
-# been folded back into upstream / proven trivial — DuckyClaw now consumes
+# been folded back into upstream / proven trivial — TuyaOpenClaw now consumes
 # them straight from TuyaOpen/src/ai_components/ai_{main,audio}/.
 set(_DC_OVERLAY ${APP_PATH}/overlay/ai_components)
 
@@ -135,7 +135,7 @@ endfunction()
 # the lib's own CMakeLists BEFORE our overlay ran, so EXAMPLE_LIB also needs
 # the overlay path explicitly — otherwise app sources that compile into
 # EXAMPLE_LIB (agent_loop.c, ducky_claw_chat.c, app_im.c, …) keep seeing the
-# upstream headers without DuckyClaw's added declarations.
+# upstream headers without TuyaOpenClaw's added declarations.
 foreach(_lib_hdir ai_mcp ai_agent)
     if(TARGET ${_lib_hdir})
         target_include_directories(${_lib_hdir} BEFORE PUBLIC ${_DC_OVERLAY}/${_lib_hdir}/include)

@@ -1,6 +1,6 @@
 /**
  * @file cron_service.c
- * @brief Cron (scheduled task) service for DuckyClaw
+ * @brief Cron (scheduled task) service for TuyaOpenClaw
  * @version 0.1
  * @date 2025-03-25
  *

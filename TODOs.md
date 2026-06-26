@@ -19,10 +19,10 @@
 
 ## Docs TODOs
 - [x]  Free Lic Guide
-- [ ]  Tuya T5 DuckyClaw Quick Start
+- [ ]  Tuya T5 TuyaOpenClaw Quick Start
 - [ ]  ESP32 Ducky Claw
-- [ ]  Raspberry Pi DuckyClaw Quick Start
+- [ ]  Raspberry Pi TuyaOpenClaw Quick Start
 - [ ]  Device MCP Quick Guide
 ### TuyaOpen.ai
-- [ ]  DuckyClaw Landing Page
-- [ ]  Main DuckyClaw README EN/CN
+- [ ]  TuyaOpenClaw Landing Page
+- [ ]  Main TuyaOpenClaw README EN/CN

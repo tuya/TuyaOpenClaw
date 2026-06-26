@@ -1,6 +1,6 @@
 /**
  * @file tools_register.c
- * @brief MCP tools registration for DuckyClaw
+ * @brief MCP tools registration for TuyaOpenClaw
  * @version 0.1
  * @date 2025-03-25
  *
@@ -48,7 +48,7 @@ static OPERATE_RET __ai_mcp_init(void *data)
     OPERATE_RET rt = OPRT_OK;
 
     #if defined(PLATFORM_LINUX) && (PLATFORM_LINUX == 1)
-        rt = ai_mcp_server_init("DuckyClaw MCP Server", "1.0");
+        rt = ai_mcp_server_init("TuyaOpenClaw MCP Server", "1.0");
         if (rt != OPRT_OK) {
             return rt;
         }
@@ -113,7 +113,7 @@ static OPERATE_RET __ai_mcp_init(void *data)
  * @brief Initialize and register all MCP tools
  *
  * This function is called during MCP server initialization to register
- * all custom tools for the DuckyClaw project.
+ * all custom tools for the TuyaOpenClaw project.
  *
  * @return OPERATE_RET OPRT_OK on success, error code on failure
  */
@@ -123,7 +123,7 @@ OPERATE_RET tool_registry_init(void)
 
     tal_event_subscribe(EVENT_MQTT_CONNECTED, "ai_mcp_init", __ai_mcp_init, SUBSCRIBE_TYPE_ONETIME);
 
-    PR_DEBUG("DuckyClaw MCP tools registered successfully");
+    PR_DEBUG("TuyaOpenClaw MCP tools registered successfully");
 
     return rt;
 }

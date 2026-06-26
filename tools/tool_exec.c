@@ -1,6 +1,6 @@
 /**
  * @file tool_exec.c
- * @brief MCP exec/system tools for DuckyClaw
+ * @brief MCP exec/system tools for TuyaOpenClaw
  * @version 0.2
  * @date 2026   -04-20
  *

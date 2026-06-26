@@ -1,12 +1,12 @@
 /**
- * @file ducky_claw_chat.h
- * @brief ducky_claw_chat module is used to
+ * @file tuyaopen_claw_chat.h
+ * @brief tuyaopen_claw_chat module: AI stream event bridge for TuyaOpenClaw
  * @version 0.1
  * @date 2025-03-25
  */
 
-#ifndef __DUCKY_CLAW_CHAT_H__
-#define __DUCKY_CLAW_CHAT_H__
+#ifndef __TUYAOPEN_CLAW_CHAT_H__
+#define __TUYAOPEN_CLAW_CHAT_H__
 
 #include "tuya_cloud_types.h"
 #include "ai_chat_main.h"
@@ -26,10 +26,10 @@ extern "C" {
 /***********************************************************
 ********************function declaration********************
 ***********************************************************/
-OPERATE_RET ducky_claw_chat_init(void);
+OPERATE_RET tuyaopen_claw_chat_init(void);
 
 #ifdef __cplusplus
 }
 #endif
 
-#endif /* __DUCKY_CLAW_CHAT_H__ */
+#endif /* __TUYAOPEN_CLAW_CHAT_H__ */

@@ -1,4 +1,4 @@
-# AGENTS.md — DuckyClaw Project Guide
+# AGENTS.md — TuyaOpenClaw Project Guide
 
 > This file provides project-level context for AI coding assistants and new contributors:
 > business logic, technical architecture, directory layout, and coding guidelines.
@@ -7,7 +7,7 @@
 
 ## 1. Business Logic
 
-DuckyClaw is a **hardware-oriented AI agent running on edge devices**. Its core value is enabling users to interact with IoT devices through natural language via IM channels (Telegram / Discord / Feishu). The on-device agent receives instructions, invokes local MCP tools to perform real actions, and replies through the same channel.
+TuyaOpenClaw is a **hardware-oriented AI agent running on edge devices**. Its core value is enabling users to interact with IoT devices through natural language via IM channels (Telegram / Discord / Feishu). The on-device agent receives instructions, invokes local MCP tools to perform real actions, and replies through the same channel.
 
 **Typical user scenarios:**
 
@@ -69,7 +69,7 @@ DuckyClaw is a **hardware-oriented AI agent running on edge devices**. Its core 
 1. **Inbound**: IM channel (or WS/cron/ACP) builds an `im_msg_t` → `message_bus_push_inbound()`
 2. **Agent consumes**: `agent_loop_task` blocks on `message_bus_pop_inbound()`
 3. **Inner loop**: `context_build_system_prompt()` assembles system prompt + history → `ai_agent_send_text()` sends to cloud
-4. **AI callback**: `ducky_claw_chat.c`'s `__ai_chat_handle_event` receives stream events:
+4. **AI callback**: `tuyaopen_claw_chat.c`'s `__ai_chat_handle_event` receives stream events:
    - `STREAM_START/DATA/STOP`: accumulate text → record in history
    - `END`: calls `agent_loop_set_last_response()` + `agent_loop_notify_turn_done()` (posts semaphore)
 5. **Tool execution**: Cloud AI triggers MCP tool call → `__on_tool_executed` hook records result → sets `s_turn.tool_called = true`
@@ -90,7 +90,7 @@ DuckyClaw is a **hardware-oriented AI agent running on edge devices**. Its core 
 
 ### 2.4 Synchronization
 
-- **Agent loop ↔ AI callback**: Binary semaphore `s_turn.sem` (`agent_loop_task` waits, `ducky_claw_chat` posts)
+- **Agent loop ↔ AI callback**: Binary semaphore `s_turn.sem` (`agent_loop_task` waits, `tuyaopen_claw_chat` posts)
 - **Shared history**: `s_history_mutex` protects `s_history_json` (cJSON array, sliding window ≤ 10 entries)
 - **Tool state**: `s_turn.lock` protects `tool_called` / `tool_result`
 - **Message bus**: `tal_queue` is inherently thread-safe
@@ -100,7 +100,7 @@ DuckyClaw is a **hardware-oriented AI agent running on edge devices**. Its core 
 ## 3. Directory Layout
 
 ```
-DuckyClaw/
+TuyaOpenClaw/   (git repo: tuya/TuyaOpenClaw, a.k.a. Ducky)
 ├── agent/                  # Core agent loop and context builder
 │   ├── agent_loop.c/h      #   Outer + inner tool-iteration loop (semaphore sync)
 │   └── context_builder.c/h #   System prompt assembly (rules, memory, skills, personality)
@@ -141,7 +141,7 @@ DuckyClaw/
 │
 ├── src/                    # Application glue layer
 │   ├── tuya_app_main.c     #   Entry point user_main(), initialization orchestration
-│   ├── ducky_claw_chat.c   #   AI stream event handling, semaphore bridge to agent_loop
+│   ├── tuyaopen_claw_chat.c   #   AI stream event handling, semaphore bridge to agent_loop
 │   ├── app_im.c            #   IM init, outbound dispatch, channel switching
 │   ├── cli_cmd.c           #   Extended CLI commands
 │   └── reset_netcfg.c      #   Network config reset logic
@@ -150,7 +150,7 @@ DuckyClaw/
 │   ├── tuya_app_config.h   #   Product ID, channel tokens, gateway config defaults
 │   ├── tuya_app_config_secrets.h(.example) # Sensitive credentials (gitignored)
 │   ├── app_im.h            #   IM application interface
-│   └── ducky_claw_chat.h   #   Chat module interface
+│   └── tuyaopen_claw_chat.h   #   Chat module interface
 │
 ├── ai_components/          # TuyaOpen AI component adapters (sub-CMake)
 ├── config/                 # Board-level Kconfig snapshots
@@ -176,7 +176,7 @@ user_main()
   ├── tuya_iot_init()             // Tuya IoT client
   ├── netmgr_init()               // Network manager
   ├── board_register_hardware()
-  ├── ducky_claw_chat_init()      // Register AI stream event callback
+  ├── tuyaopen_claw_chat_init()      // Register AI stream event callback
   ├── app_im_init()               // Subscribe to MQTT connected event (deferred IM init)
   ├── ws_server_start()           // Start WebSocket server
   ├── tool_registry_init()        // Subscribe to MQTT connected → one-shot MCP tool chain init

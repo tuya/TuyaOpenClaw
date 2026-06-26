@@ -1,5 +1,6 @@
 /**
- * @file ducky_claw_chat_bot.c
+ * @file tuyaopen_claw_chat.c
+ * @brief AI stream event bridge for TuyaOpenClaw
  * @version 0.1
  * @date 2025-03-25
  */
@@ -16,7 +17,7 @@
 #if defined(ENABLE_COMP_AI_VIDEO) && (ENABLE_COMP_AI_VIDEO == 1)
 #include "ai_video_input.h"
 #endif
-#include "ducky_claw_chat.h"
+#include "tuyaopen_claw_chat.h"
 #include "agent_loop.h"
 #include "acp_client.h"
 
@@ -221,7 +222,7 @@ static void __ai_chat_handle_event(AI_NOTIFY_EVENT_T *event)
     }
 }
 
-OPERATE_RET ducky_claw_chat_init(void)
+OPERATE_RET tuyaopen_claw_chat_init(void)
 {
     OPERATE_RET rt = OPRT_OK;
 
