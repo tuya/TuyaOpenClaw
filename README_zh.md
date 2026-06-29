@@ -177,9 +177,9 @@ tos.py build
 编译产物输出至 `dist/` 目录。
 
 ### 开发指南
-- Tuya T5AI：[TuyaOpenClaw 快速开始（T5-AI）](https://tuyaopen.ai/docs/tuyaopenclaw/quick-start-T5AI)
-- Raspberry Pi：[TuyaOpenClaw 快速开始（Raspberry Pi 5）](https://tuyaopen.ai/docs/tuyaopenclaw/quick-start-raspberry-pi-5)
-- ESP32-S3：[TuyaOpenClaw 快速开始（ESP32-S3）](https://tuyaopen.ai/docs/tuyaopenclaw/quick-start-ESP32S3)
+- Tuya T5AI：[TuyaOpenClaw 快速开始（T5-AI）](https://tuyaopen.ai/zh/docs/duckyclaw/ducky-quick-start-T5AI)
+- Raspberry Pi：[TuyaOpenClaw 快速开始（Raspberry Pi 5）](https://tuyaopen.ai/zh/docs/duckyclaw/ducky-quick-start-raspberry-pi-5)
+- ESP32-S3：[TuyaOpenClaw 快速开始（ESP32-S3）](https://tuyaopen.ai/zh/docs/duckyclaw/ducky-quick-start-ESP32S3)
 
 
 ## 🔌 技能（Skills）开发
