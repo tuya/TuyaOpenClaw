@@ -9,15 +9,15 @@ TuyaOpenClaw is a hardware-oriented AI agent built on the TuyaOpen C SDK. It run
 
 | Category | Models/Platforms |
 |----------|-----------------|
-| **MCUs** | Tuya T5AI Module (ATK, Waveshare, DshanPi variants), ESP32-S3 |
-| **SoCs** | Raspberry Pi 4/5/CM4/CM5, Linux ARM SoCs (Qualcomm/Rockchip/Allwinner etc.) |
+| **MCUs** | Tuya T5AI Module (ATK, Waveshare, variants), ESP32-S3 |
+| **SoCs** | Raspberry Pi 4/5/CM4/CM5, DshanPi, Linux ARM SoCs (Qualcomm/Rockchip/Allwinner etc.) |
 | **PCs**  | Linux Ubuntu (x64) |
 
 ---
 
 This project is built on top of the TuyaOpen C SDK, which offers flexible cross ARM Cortex-M and ARM Cortex-A, and even x64 PC deployments. It also offers a wide variety of ready-to-use hardware drivers and APIs, making integrating new hardware and peripherals as easy as building blocks (sensors, displays, speaker-mic audio, cameras, IoT cloud integrations).
 
-![GitHub Repo Banner](https://images.tuyacn.com/fe-static/docs/img/210f532a-0bb1-4ca5-9037-f5488958a709.jpg)
+![GitHub Repo Banner](https://images.tuyacn.com/fe-static/docs/img/cc7ba9a9-6dd3-4569-aed7-d5694191e659.png)
 
 **Your autonomous AI companion.** Simplify Hardware Integration, Unlock Infinite Control Possibilities
 
