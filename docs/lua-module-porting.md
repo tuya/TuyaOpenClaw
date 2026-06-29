@@ -8,7 +8,7 @@
 
 ## 0. 背景
 
-[TuyaOpenClaw](https://github.com/tuya/TuyaOpenClaw)（[官网](https://tuyaopen.ai/zh/duckyclaw)）是 [TuyaOpen](https://tuyaopen.ai) 上的开源硬件 AI Agent,主战平台是 Tuya T5AI 开发板（也支持 ESP32、Linux、Raspberry Pi）。其核心是一个端侧 Agent 循环,通过 IM 通道（Telegram/Discord/Feishu）与用户交互,并通过 MCP 风格的工具协议在设备上执行操作。
+[TuyaOpenClaw](https://github.com/tuya/TuyaOpenClaw)（[官网](https://tuyaopen.ai/zh/tuyaopenclaw)）是 [TuyaOpen](https://tuyaopen.ai) 上的开源硬件 AI Agent,主战平台是 Tuya T5AI 开发板（也支持 ESP32、Linux、Raspberry Pi）。其核心是一个端侧 Agent 循环,通过 IM 通道（Telegram/Discord/Feishu）与用户交互,并通过 MCP 风格的工具协议在设备上执行操作。
 
 为了让云端 LLM 能够"动态写一段小代码,在设备上运行后拿结果",TuyaOpenClaw 引入了 [esp-claw](https://esp-claw.com/zh-cn/)（参考实现）的 Lua 子系统设计：把 Lua 5.5 解释器嵌入设备,作为一个名为 `lua_run_script` 的 MCP 工具暴露给 LLM。沙盒里只开放安全的标准库子集 + 设备硬件模块（GPIO、延时等），让 LLM 既能做计算/字符串处理,也能直接控 IO、调时序。
 
@@ -490,7 +490,7 @@ TuyaOpenClaw 的 `skill_loader` 会扫描设备 SD 卡 `/sdcard/skills/*.md`,把
 
 并把精简版同步进 `skills/skill_loader.c` 的 `BUILTIN_LUA_RUN`/`BUILTIN_LUA_GPIO`/`BUILTIN_LUA_DELAY` 内置串中,首次启动 `skill_loader_init()` 会自动写到 `/sdcard/skills/lua_*.md`(已存在则跳过)。
 
-参见 [hardware-skill 文档](https://tuyaopen.ai/zh/docs/duckyclaw/hardware-skill)。
+参见 [hardware-skill 文档](https://tuyaopen.ai/zh/docs/tuyaopenclaw/hardware-skill)。
 
 ## 6. Lua 端 API 参考
 
@@ -709,10 +709,10 @@ CONFIG_ENABLE_LUA_MODULE_PWM=y
 
 ## 10. 参考资料
 
-- TuyaOpenClaw 项目主页: <https://tuyaopen.ai/zh/duckyclaw>
+- TuyaOpenClaw 项目主页: <https://tuyaopen.ai/zh/tuyaopenclaw>
 - TuyaOpenClaw 源码: <https://github.com/tuya/TuyaOpenClaw>
 - Claw 平台: <https://claw.tuyasmart.com/>
-- TuyaOpenClaw 硬件 Skill 指南: <https://tuyaopen.ai/zh/docs/duckyclaw/hardware-skill>
+- TuyaOpenClaw 硬件 Skill 指南: <https://tuyaopen.ai/zh/docs/tuyaopenclaw/hardware-skill>
 - T5AI 引脚映射: <https://www.tuyaopen.ai/zh/docs/hardware-specific/tuya-t5/t5ai-peripheral-mapping>
 - esp-claw 主页: <https://esp-claw.com/zh-cn/>
 - esp-claw lua_modules 参考(本移植的设计原型): <https://esp-claw.com/zh-cn/reference-cap/lua-modules/>
