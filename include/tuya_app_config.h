@@ -33,7 +33,6 @@ extern "C" {
 
 // IM configuration
 // feishu | telegram | discord | weixin | qqbot
-// NOTE: ESP32-S3 does not support weixin
 #ifndef IM_SECRET_CHANNEL_MODE
 #define IM_SECRET_CHANNEL_MODE      "feishu"
 #endif
