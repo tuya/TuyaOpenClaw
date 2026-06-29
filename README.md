@@ -177,9 +177,9 @@ tos.py build
 Output goes to the `dist/` directory.
 
 ### Development Guides
-- Tuya T5AI: [TuyaOpenClaw Quick Start (T5-AI)](https://tuyaopen.ai/docs/tuyaopenclaw/quick-start-T5AI)
-- Raspberry Pi: [TuyaOpenClaw Quick Start (Raspberry Pi 5)](https://tuyaopen.ai/docs/tuyaopenclaw/quick-start-raspberry-pi-5)
-- ESP32-S3: [TuyaOpenClaw Quick Start (ESP32-S3)](https://tuyaopen.ai/docs/tuyaopenclaw/quick-start-ESP32S3)
+- Tuya T5AI: [TuyaOpenClaw Quick Start (T5-AI)](https://tuyaopen.ai/docs/duckyclaw/ducky-quick-start-T5AI)
+- Raspberry Pi: [TuyaOpenClaw Quick Start (Raspberry Pi 5)](https://tuyaopen.ai/docs/duckyclaw/ducky-quick-start-raspberry-pi-5)
+- ESP32-S3: [TuyaOpenClaw Quick Start (ESP32-S3)](https://tuyaopen.ai/docs/duckyclaw/ducky-quick-start-ESP32S3)
 
 
 ## 🔌 Skills Development
